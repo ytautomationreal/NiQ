@@ -92,12 +92,29 @@ export default defineUnlistedScript(() => {
     }
 
     const message: NiqBridgeMessage = event.data;
+    const player = getMoviePlayer();
+
     if (message.type === 'NIQ_REQUEST_PLAYER_STATE') {
       extractAndBroadcast();
     } else if (message.type === 'NIQ_PLAYER_SEEK') {
-      const player = getMoviePlayer();
       if (player && typeof player.seekTo === 'function') {
         player.seekTo(message.payload.seconds, true);
+      }
+    } else if (message.type === 'NIQ_PLAYER_PAUSE') {
+      if (player && typeof player.pauseVideo === 'function') {
+        player.pauseVideo();
+      }
+      const video = document.querySelector('video') as HTMLVideoElement | null;
+      if (video && !video.paused) {
+        video.pause();
+      }
+    } else if (message.type === 'NIQ_PLAYER_PLAY') {
+      if (player && typeof player.playVideo === 'function') {
+        player.playVideo();
+      }
+      const video = document.querySelector('video') as HTMLVideoElement | null;
+      if (video && video.paused) {
+        video.play().catch(() => {});
       }
     }
   });

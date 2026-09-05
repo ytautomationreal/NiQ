@@ -172,16 +172,15 @@ export const ThumbnailModal: React.FC<ThumbnailModalProps> = ({
       subtitle={videoTitle || videoId}
       icon={ImageIcon}
       badge="Multi-Resolution"
-      size="5xl"
     >
-      <div className="space-y-6">
-        {/* Controls Bar */}
-        <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center justify-between pb-4 border-b border-white/10">
+      <div className="space-y-6 flex-1 flex flex-col">
+        {/* Controls Bar - Standard 50px Height */}
+        <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center justify-between pb-5 border-b border-white/10 flex-shrink-0">
           {/* Format Switcher */}
-          <div className="flex items-center space-x-2 p-1.5 bg-[#141726] rounded-xl border border-white/5">
+          <div className="flex items-center space-x-2 p-1.5 bg-[#121626] rounded-2xl border border-white/10">
             <button
               onClick={() => setSelectedFormat('jpg')}
-              className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${
+              className={`px-5 py-2.5 rounded-xl text-sm font-bold tracking-wide transition-all ${
                 selectedFormat === 'jpg'
                   ? 'bg-blue-600 text-white shadow-md'
                   : 'text-slate-400 hover:text-slate-200'
@@ -191,7 +190,7 @@ export const ThumbnailModal: React.FC<ThumbnailModalProps> = ({
             </button>
             <button
               onClick={() => setSelectedFormat('webp')}
-              className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${
+              className={`px-5 py-2.5 rounded-xl text-sm font-bold tracking-wide transition-all ${
                 selectedFormat === 'webp'
                   ? 'bg-blue-600 text-white shadow-md'
                   : 'text-slate-400 hover:text-slate-200'
@@ -207,17 +206,18 @@ export const ThumbnailModal: React.FC<ThumbnailModalProps> = ({
             icon={Archive}
             onClick={handleDownloadAllZip}
             disabled={isZipping}
+            className="h-12 px-6 text-sm font-bold shadow-lg"
           >
             {isZipping ? 'Packaging ZIP Archive...' : 'Download All as ZIP Archive'}
           </Button>
         </div>
 
-        {/* Thumbnail Options Grid - Generous, Crisp, Large */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-h-[600px] overflow-y-auto pr-2">
+        {/* Thumbnail Options Grid - 2-Column High Resolution Layout */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-7 max-h-[580px] overflow-y-auto pr-2 flex-1">
           {thumbnailOptions.map((opt, idx) => (
             <div
               key={idx}
-              className="group flex flex-col rounded-2xl bg-[#141726] border border-white/10 hover:border-blue-500/50 overflow-hidden shadow-lg transition-all duration-200"
+              className="group flex flex-col rounded-2xl bg-[#121626] border border-white/10 hover:border-blue-500/50 overflow-hidden shadow-xl transition-all duration-200"
             >
               {/* Image Preview Container */}
               <div className="relative aspect-video bg-black/60 overflow-hidden flex items-center justify-center">
@@ -233,28 +233,28 @@ export const ThumbnailModal: React.FC<ThumbnailModalProps> = ({
                   }}
                 />
                 {opt.badge && (
-                  <span className="absolute top-3 left-3 px-2.5 py-1 rounded-md text-xs font-mono uppercase font-bold bg-blue-600/90 backdrop-blur-md text-white border border-blue-400/40 shadow-md">
+                  <span className="absolute top-3.5 left-3.5 px-3 py-1 rounded-lg text-xs font-mono uppercase font-bold bg-blue-600/90 backdrop-blur-md text-white border border-blue-400/40 shadow-md">
                     {opt.badge}
                   </span>
                 )}
-                <span className="absolute bottom-3 right-3 px-2.5 py-1 rounded-md text-xs font-mono font-semibold bg-black/80 backdrop-blur-md text-slate-200 border border-white/10">
+                <span className="absolute bottom-3.5 right-3.5 px-3 py-1 rounded-lg text-xs font-mono font-semibold bg-black/85 backdrop-blur-md text-slate-200 border border-white/10">
                   {opt.resolution}
                 </span>
               </div>
 
               {/* Card Meta & Actions */}
-              <div className="p-4 flex items-center justify-between border-t border-white/5 bg-[#121522]">
+              <div className="p-5 flex items-center justify-between border-t border-white/5 bg-[#0f121d]">
                 <div>
-                  <div className="text-sm font-semibold text-slate-100">{opt.label}</div>
-                  <div className="text-xs text-slate-400 uppercase font-mono mt-1">
+                  <div className="text-base font-bold text-slate-100">{opt.label}</div>
+                  <div className="text-xs text-slate-400 uppercase font-mono mt-1 font-medium">
                     {opt.format.toUpperCase()} • {opt.resolution}
                   </div>
                 </div>
 
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-2.5">
                   <button
                     onClick={() => handleCopyLink(opt.url)}
-                    className="flex items-center space-x-1.5 px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white transition-colors border border-white/5 text-xs font-medium"
+                    className="flex items-center space-x-1.5 px-3.5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-200 hover:text-white transition-colors border border-white/10 text-xs font-semibold"
                     title="Copy direct image URL"
                   >
                     {copiedUrl === opt.url ? (
@@ -269,15 +269,15 @@ export const ThumbnailModal: React.FC<ThumbnailModalProps> = ({
                     href={opt.url}
                     target="_blank"
                     rel="noreferrer"
-                    className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white transition-colors border border-white/5"
+                    className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white transition-colors border border-white/10"
                     title="Open full size in new tab"
                   >
-                    <ExternalLink size={15} />
+                    <ExternalLink size={16} />
                   </a>
 
                   <button
                     onClick={() => handleDownloadSingle(opt)}
-                    className="flex items-center space-x-1.5 px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white transition-all shadow-md text-xs font-semibold"
+                    className="flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white transition-all shadow-md text-xs font-bold"
                     title="Download image file"
                   >
                     <Download size={14} />

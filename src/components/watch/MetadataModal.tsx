@@ -64,11 +64,10 @@ export const MetadataModal: React.FC<MetadataModalProps> = ({
       subtitle={details.title}
       icon={FileCode}
       badge={details.category || 'Metadata'}
-      size="4xl"
     >
-      <div className="space-y-6">
-        {/* Navigation Tabs */}
-        <div className="flex items-center space-x-2 border-b border-white/10 pb-3">
+      <div className="space-y-6 flex-1 flex flex-col">
+        {/* Navigation Tabs - Standard 48px Tab Bar */}
+        <div className="flex items-center space-x-3 border-b border-white/10 pb-4 flex-shrink-0">
           {(
             [
               { id: 'overview', label: 'Overview Metrics', icon: Layers },
@@ -83,13 +82,13 @@ export const MetadataModal: React.FC<MetadataModalProps> = ({
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-semibold tracking-wide transition-all ${
+                className={`flex items-center space-x-2.5 px-5 py-2.5 rounded-xl text-sm font-semibold tracking-wide transition-all ${
                   isActive
-                    ? 'bg-blue-600/25 text-blue-400 border border-blue-500/50 shadow-sm'
+                    ? 'bg-blue-600/30 text-blue-400 border border-blue-500/50 shadow-sm'
                     : 'text-slate-400 hover:text-slate-200 hover:bg-white/5 border border-transparent'
                 }`}
               >
-                <TabIcon size={15} />
+                <TabIcon size={17} />
                 <span>{tab.label}</span>
               </button>
             );
@@ -98,96 +97,104 @@ export const MetadataModal: React.FC<MetadataModalProps> = ({
 
         {/* Tab 1: Overview */}
         {activeTab === 'overview' && (
-          <div className="space-y-5">
-            {/* Top Stat Highlights */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
-              <div className="p-4 rounded-xl bg-[#141726] border border-white/5">
-                <div className="text-[11px] font-medium uppercase tracking-wider text-slate-400">Total Views</div>
-                <div className="text-xl font-bold font-mono text-white mt-1">
+          <div className="space-y-6 flex-1">
+            {/* Top 4 Stat Highlight Cards */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="p-6 rounded-2xl bg-[#121626] border border-white/10 shadow-sm">
+                <div className="text-xs font-bold uppercase tracking-wider text-slate-400">Total Views</div>
+                <div className="text-3xl font-extrabold font-mono text-white mt-2">
                   {details.views ? details.views.toLocaleString() : '0'}
                 </div>
               </div>
-              <div className="p-4 rounded-xl bg-[#141726] border border-white/5">
-                <div className="text-[11px] font-medium uppercase tracking-wider text-slate-400">Duration</div>
-                <div className="text-xl font-bold font-mono text-white mt-1">
+              <div className="p-6 rounded-2xl bg-[#121626] border border-white/10 shadow-sm">
+                <div className="text-xs font-bold uppercase tracking-wider text-slate-400">Duration</div>
+                <div className="text-3xl font-extrabold font-mono text-white mt-2">
                   {formatSeconds(details.lengthSeconds)}
                 </div>
               </div>
-              <div className="p-4 rounded-xl bg-[#141726] border border-white/5">
-                <div className="text-[11px] font-medium uppercase tracking-wider text-slate-400">Tags Count</div>
-                <div className="text-xl font-bold font-mono text-white mt-1">
+              <div className="p-6 rounded-2xl bg-[#121626] border border-white/10 shadow-sm">
+                <div className="text-xs font-bold uppercase tracking-wider text-slate-400">Tags Count</div>
+                <div className="text-3xl font-extrabold font-mono text-white mt-2">
                   {details.tags.length}
                 </div>
               </div>
-              <div className="p-4 rounded-xl bg-[#141726] border border-white/5">
-                <div className="text-[11px] font-medium uppercase tracking-wider text-slate-400">Captions</div>
-                <div className="text-xl font-bold text-emerald-400 mt-1 flex items-center gap-1.5">
-                  <CheckCircle2 size={18} />
-                  <span>{details.captionsList.length || (details.captionsAvailable ? 'Yes' : 'None')}</span>
+              <div className="p-6 rounded-2xl bg-[#121626] border border-white/10 shadow-sm">
+                <div className="text-xs font-bold uppercase tracking-wider text-slate-400">Captions</div>
+                <div className="text-3xl font-extrabold text-emerald-400 mt-2 flex items-center gap-2">
+                  <CheckCircle2 size={26} />
+                  <span>{details.captionsList.length || (details.captionsAvailable ? 'Available' : 'None')}</span>
                 </div>
               </div>
             </div>
 
-            {/* Detailed Key-Value Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="p-5 rounded-xl bg-[#141726] border border-white/5 space-y-3">
-                <div className="text-xs font-semibold uppercase tracking-wider text-slate-300 border-b border-white/5 pb-2">
+            {/* Detailed Properties & Distribution Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="p-7 rounded-2xl bg-[#121626] border border-white/10 space-y-4 shadow-sm">
+                <div className="text-sm font-bold uppercase tracking-wider text-slate-300 border-b border-white/10 pb-3">
                   Identity & Properties
                 </div>
-                <div className="space-y-2.5 text-sm">
-                  <div className="flex justify-between items-center py-1 border-b border-white/5">
-                    <span className="text-slate-400">Video ID</span>
+                <div className="space-y-3 text-sm">
+                  <div className="flex justify-between items-center py-2 border-b border-white/5">
+                    <span className="text-slate-400 font-medium">Video ID</span>
                     <button
                       onClick={() => copyToClipboard(details.videoId, 'Video ID')}
-                      className="font-mono text-blue-400 hover:underline flex items-center gap-1.5"
+                      className="font-mono text-base font-semibold text-blue-400 hover:underline flex items-center gap-2"
                     >
                       <span>{details.videoId}</span>
-                      <Copy size={13} />
+                      <Copy size={15} />
                     </button>
                   </div>
-                  <div className="flex justify-between items-center py-1 border-b border-white/5">
-                    <span className="text-slate-400">Category</span>
-                    <span className="font-medium text-slate-200">{details.category || 'Standard Entertainment'}</span>
+                  <div className="flex justify-between items-center py-2 border-b border-white/5">
+                    <span className="text-slate-400 font-medium">Category</span>
+                    <span className="text-base font-semibold text-slate-200">
+                      {details.category || 'Standard Entertainment'}
+                    </span>
                   </div>
-                  <div className="flex justify-between items-center py-1 border-b border-white/5">
-                    <span className="text-slate-400">Exact Upload Date</span>
-                    <span className="font-mono text-slate-200">{details.publishDate || 'Not specified'}</span>
+                  <div className="flex justify-between items-center py-2 border-b border-white/5">
+                    <span className="text-slate-400 font-medium">Exact Upload Date</span>
+                    <span className="font-mono text-base font-semibold text-slate-200">
+                      {details.publishDate || 'Not specified'}
+                    </span>
                   </div>
-                  <div className="flex justify-between items-center py-1">
-                    <span className="text-slate-400">Stream Status</span>
-                    <span className="font-medium text-slate-200">
-                      {details.isLive ? 'Live Stream' : 'Standard Video On Demand (VOD)'}
+                  <div className="flex justify-between items-center py-2">
+                    <span className="text-slate-400 font-medium">Stream Status</span>
+                    <span className="text-base font-semibold text-slate-200">
+                      {details.isLive ? 'Live Broadcast' : 'Standard Video On Demand (VOD)'}
                     </span>
                   </div>
                 </div>
               </div>
 
-              <div className="p-5 rounded-xl bg-[#141726] border border-white/5 space-y-3">
-                <div className="text-xs font-semibold uppercase tracking-wider text-slate-300 border-b border-white/5 pb-2">
+              <div className="p-7 rounded-2xl bg-[#121626] border border-white/10 space-y-4 shadow-sm">
+                <div className="text-sm font-bold uppercase tracking-wider text-slate-300 border-b border-white/10 pb-3">
                   Creator & Distribution
                 </div>
-                <div className="space-y-2.5 text-sm">
-                  <div className="flex justify-between items-center py-1 border-b border-white/5">
-                    <span className="text-slate-400">Channel Name</span>
-                    <span className="font-semibold text-slate-100">{details.channelTitle}</span>
+                <div className="space-y-3 text-sm">
+                  <div className="flex justify-between items-center py-2 border-b border-white/5">
+                    <span className="text-slate-400 font-medium">Channel Name</span>
+                    <span className="text-base font-bold text-slate-100">{details.channelTitle}</span>
                   </div>
-                  <div className="flex justify-between items-center py-1 border-b border-white/5">
-                    <span className="text-slate-400">Channel ID</span>
+                  <div className="flex justify-between items-center py-2 border-b border-white/5">
+                    <span className="text-slate-400 font-medium">Channel ID</span>
                     <button
                       onClick={() => copyToClipboard(details.channelId, 'Channel ID')}
-                      className="font-mono text-blue-400 hover:underline flex items-center gap-1.5"
+                      className="font-mono text-base font-semibold text-blue-400 hover:underline flex items-center gap-2"
                     >
                       <span>{details.channelId}</span>
-                      <Copy size={13} />
+                      <Copy size={15} />
                     </button>
                   </div>
-                  <div className="flex justify-between items-center py-1 border-b border-white/5">
-                    <span className="text-slate-400">Raw View Count</span>
-                    <span className="font-mono text-slate-200">{details.views.toLocaleString()}</span>
+                  <div className="flex justify-between items-center py-2 border-b border-white/5">
+                    <span className="text-slate-400 font-medium">Raw View Count</span>
+                    <span className="font-mono text-base font-bold text-slate-100">
+                      {details.views.toLocaleString()}
+                    </span>
                   </div>
-                  <div className="flex justify-between items-center py-1">
-                    <span className="text-slate-400">Length (Seconds)</span>
-                    <span className="font-mono text-slate-200">{details.lengthSeconds} seconds</span>
+                  <div className="flex justify-between items-center py-2">
+                    <span className="text-slate-400 font-medium">Length in Seconds</span>
+                    <span className="font-mono text-base font-semibold text-slate-200">
+                      {details.lengthSeconds}s
+                    </span>
                   </div>
                 </div>
               </div>
@@ -197,32 +204,32 @@ export const MetadataModal: React.FC<MetadataModalProps> = ({
 
         {/* Tab 2: Assets & Monetization */}
         {activeTab === 'monetization' && (
-          <div className="space-y-4">
-            <div className="p-5 rounded-xl bg-[#141726] border border-white/5 space-y-2">
-              <div className="text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">
-                Monetization & Ad Offset Intervals
+          <div className="space-y-5 flex-1 flex flex-col">
+            <div className="p-6 rounded-2xl bg-[#121626] border border-white/10 space-y-3">
+              <div className="text-sm font-bold uppercase tracking-wider text-slate-300">
+                Monetization & Ad Insertion Offsets
               </div>
               {adBreakCount > 0 ? (
                 <div>
                   <p className="text-sm text-slate-300 mb-3">
-                    Found <span className="font-semibold text-emerald-400">{adBreakCount}</span> ad insertion markers in player response.
+                    Found <span className="font-bold text-emerald-400">{adBreakCount}</span> ad insertion offset markers in YouTube player response.
                   </p>
-                  <div className="max-h-52 overflow-y-auto bg-black/50 p-4 rounded-xl font-mono text-xs text-slate-300 border border-white/10">
+                  <div className="max-h-64 overflow-y-auto bg-black/60 p-5 rounded-xl font-mono text-xs text-slate-200 border border-white/10 leading-relaxed">
                     {JSON.stringify(details.adPlacements, null, 2)}
                   </div>
                 </div>
               ) : (
-                <p className="text-sm text-slate-400 py-4">
+                <p className="text-sm text-slate-400 py-3">
                   No ad markers explicitly reported in this player response instance.
                 </p>
               )}
             </div>
 
-            <div className="p-5 rounded-xl bg-[#141726] border border-white/5 space-y-2">
-              <div className="text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">
+            <div className="p-6 rounded-2xl bg-[#121626] border border-white/10 space-y-3">
+              <div className="text-sm font-bold uppercase tracking-wider text-slate-300">
                 Storyboard Spec Sheet Asset
               </div>
-              <p className="text-xs text-slate-300 break-all font-mono bg-black/50 p-3 rounded-xl border border-white/10">
+              <p className="text-xs text-slate-300 break-all font-mono bg-black/60 p-4 rounded-xl border border-white/10 leading-normal">
                 {details.storyboards || 'No storyboard spec returned.'}
               </p>
             </div>
@@ -231,10 +238,10 @@ export const MetadataModal: React.FC<MetadataModalProps> = ({
 
         {/* Tab 3: Description */}
         {activeTab === 'description' && (
-          <div className="space-y-3">
+          <div className="space-y-4 flex-1 flex flex-col">
             <div className="flex justify-between items-center">
-              <span className="text-sm text-slate-400">
-                Total Length: <span className="font-mono text-slate-200">{details.description.length}</span> characters
+              <span className="text-sm font-semibold text-slate-300">
+                Total Length: <span className="font-mono text-white">{details.description.length}</span> characters
               </span>
               <Button
                 variant="secondary"
@@ -248,17 +255,16 @@ export const MetadataModal: React.FC<MetadataModalProps> = ({
             <textarea
               readOnly
               value={details.description}
-              rows={15}
-              className="w-full bg-[#111420] border border-white/10 rounded-xl p-4 text-sm font-sans text-slate-200 focus:outline-none resize-none leading-relaxed"
+              className="flex-1 w-full min-h-[440px] bg-[#0e111d] border border-white/10 rounded-2xl p-6 text-sm font-sans text-slate-100 focus:outline-none resize-none leading-relaxed shadow-inner"
             />
           </div>
         )}
 
         {/* Tab 4: Raw JSON */}
         {activeTab === 'json' && (
-          <div className="space-y-3">
+          <div className="space-y-4 flex-1 flex flex-col">
             <div className="flex justify-between items-center">
-              <span className="text-sm text-slate-400">Complete Raw JSON Payload</span>
+              <span className="text-sm font-semibold text-slate-300">Complete Raw JSON Payload</span>
               <Button
                 variant="secondary"
                 size="md"
@@ -267,10 +273,10 @@ export const MetadataModal: React.FC<MetadataModalProps> = ({
                   copyToClipboard(JSON.stringify(details, null, 2), 'Raw Metadata JSON')
                 }
               >
-                Copy JSON
+                Copy Complete JSON
               </Button>
             </div>
-            <pre className="max-h-[460px] overflow-y-auto bg-[#090b10] border border-white/10 rounded-xl p-4 text-xs font-mono text-cyan-300 leading-relaxed">
+            <pre className="flex-1 max-h-[460px] overflow-y-auto bg-[#07090f] border border-white/10 rounded-2xl p-6 text-xs font-mono text-cyan-300 leading-relaxed shadow-inner">
               {JSON.stringify(details, null, 2)}
             </pre>
           </div>

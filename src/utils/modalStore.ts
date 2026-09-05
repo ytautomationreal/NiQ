@@ -1,4 +1,4 @@
-import { WatchVideoDetails, ToastNotification } from '../types/niq';
+import { WatchVideoDetails, ToastNotification, NiqBridgeMessage } from '../types/niq';
 
 export type ModalType = 'tags' | 'metadata' | 'thumbnails' | null;
 
@@ -9,6 +9,7 @@ class ModalStore {
   private videoDetails: WatchVideoDetails | null = null;
   private toasts: ToastNotification[] = [];
   private listeners: Set<Listener> = new Set();
+  private wasPlayingBeforeModal = false;
 
   subscribe(listener: Listener): () => void {
     this.listeners.add(listener);
@@ -27,12 +28,61 @@ class ModalStore {
     };
   }
 
+  private pausePlayer() {
+    try {
+      const video = document.querySelector('video') as HTMLVideoElement | null;
+      if (video && !video.paused) {
+        this.wasPlayingBeforeModal = true;
+        video.pause();
+      } else {
+        this.wasPlayingBeforeModal = false;
+      }
+      // Also notify Main World player instance
+      window.postMessage(
+        {
+          source: 'NIQ_ISOLATED_WORLD',
+          type: 'NIQ_PLAYER_PAUSE',
+          payload: {},
+        } as NiqBridgeMessage,
+        '*'
+      );
+    } catch (e) {
+      console.warn('[NiQ] Could not pause video:', e);
+    }
+  }
+
+  private resumePlayer() {
+    try {
+      if (this.wasPlayingBeforeModal) {
+        this.wasPlayingBeforeModal = false;
+        const video = document.querySelector('video') as HTMLVideoElement | null;
+        if (video) {
+          video.play().catch(() => {});
+        }
+        window.postMessage(
+          {
+            source: 'NIQ_ISOLATED_WORLD',
+            type: 'NIQ_PLAYER_PLAY',
+            payload: {},
+          } as NiqBridgeMessage,
+          '*'
+        );
+      }
+    } catch (e) {
+      console.warn('[NiQ] Could not resume video:', e);
+    }
+  }
+
   open(modal: ModalType) {
+    if (modal) {
+      this.pausePlayer();
+    }
     this.activeModal = modal;
     this.emit();
   }
 
   close() {
+    this.resumePlayer();
     this.activeModal = null;
     this.emit();
   }

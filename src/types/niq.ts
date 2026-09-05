@@ -54,6 +54,8 @@ export type NiqBridgeMessageType =
   | 'NIQ_PLAYER_RESPONSE'
   | 'NIQ_REQUEST_PLAYER_STATE'
   | 'NIQ_PLAYER_SEEK'
+  | 'NIQ_PLAYER_PAUSE'
+  | 'NIQ_PLAYER_PLAY'
   | 'NIQ_AD_OFFSETS';
 
 export interface NiqBridgeMessage<T = any> {

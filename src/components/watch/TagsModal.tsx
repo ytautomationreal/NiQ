@@ -57,45 +57,45 @@ export const TagsModal: React.FC<TagsModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Video Tags & Embedded Keywords"
+      title="Video Tags & Search Keywords"
       subtitle={videoTitle || 'Current Video'}
       icon={Tag}
-      badge={`${tags.length} Tags Detected`}
-      size="4xl"
+      badge={`${tags.length} Tags`}
     >
       {tags.length === 0 ? (
-        <div className="py-16 text-center text-slate-400">
-          <Tag size={42} className="mx-auto text-slate-600 mb-3" />
-          <p className="text-base font-semibold text-slate-200">No embedded tags found</p>
-          <p className="text-sm text-slate-500 mt-1 max-w-md mx-auto">
+        <div className="py-20 text-center text-slate-400 flex-1 flex flex-col items-center justify-center">
+          <Tag size={48} className="text-slate-600 mb-4" />
+          <p className="text-lg font-bold text-slate-200">No embedded tags found</p>
+          <p className="text-sm text-slate-400 mt-2 max-w-md mx-auto">
             The creator has not attached public search tags or keywords to this video upload.
           </p>
         </div>
       ) : (
-        <div className="space-y-5">
+        <div className="space-y-6 flex-1 flex flex-col">
           {/* Action Header & Search */}
-          <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center justify-between pb-4 border-b border-white/10">
+          <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center justify-between pb-5 border-b border-white/10 flex-shrink-0">
             <div className="relative flex-1">
               <Search
-                size={16}
-                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
+                size={18}
+                className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
               />
               <input
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search or filter tags..."
-                className="w-full bg-[#131624] border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500/60"
+                className="w-full h-12 bg-[#121626] border border-white/10 rounded-2xl pl-12 pr-5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500/60 transition-colors"
               />
             </div>
 
-            <div className="flex items-center space-x-2.5">
+            <div className="flex items-center space-x-3">
               <Button
                 variant="secondary"
                 size="md"
                 icon={Copy}
                 onClick={handleCopyAllComma}
                 title="Copy all tags separated by commas"
+                className="h-12 px-5 text-sm font-semibold"
               >
                 Copy Comma
               </Button>
@@ -105,6 +105,7 @@ export const TagsModal: React.FC<TagsModalProps> = ({
                 icon={Hash}
                 onClick={handleCopyAllHashtags}
                 title="Copy all tags formatted as #hashtags"
+                className="h-12 px-5 text-sm font-semibold"
               >
                 Copy Hashtags
               </Button>
@@ -114,6 +115,7 @@ export const TagsModal: React.FC<TagsModalProps> = ({
                 icon={List}
                 onClick={handleCopyAllLines}
                 title="Copy each tag on a separate line"
+                className="h-12 px-5 text-sm font-semibold"
               >
                 Copy Lines
               </Button>
@@ -121,20 +123,20 @@ export const TagsModal: React.FC<TagsModalProps> = ({
           </div>
 
           {/* Spacious Tags Cloud */}
-          <div className="flex flex-wrap gap-2.5 max-h-[480px] overflow-y-auto pr-2">
+          <div className="flex flex-wrap gap-3 max-h-[520px] overflow-y-auto pr-2 flex-1">
             {filteredTags.map((tag, idx) => (
               <button
                 key={idx}
                 onClick={() => handleCopySingle(tag, idx)}
-                className="group flex items-center space-x-2 px-3.5 py-2 rounded-xl bg-[#141726] hover:bg-[#1f243b] border border-white/10 hover:border-blue-500/50 text-slate-200 hover:text-white transition-all text-xs font-medium text-left"
+                className="group flex items-center space-x-2.5 px-4 py-3 rounded-xl bg-[#121626] hover:bg-[#1b2138] border border-white/10 hover:border-blue-500/50 text-slate-100 hover:text-white transition-all text-sm font-medium text-left shadow-sm hover:scale-[1.01]"
                 title="Click to copy this individual tag"
               >
                 <span>{tag}</span>
                 {copiedIndex === idx ? (
-                  <Check size={13} className="text-emerald-400" />
+                  <Check size={14} className="text-emerald-400" />
                 ) : (
                   <Copy
-                    size={12}
+                    size={13}
                     className="opacity-0 group-hover:opacity-70 text-slate-400"
                   />
                 )}
@@ -143,7 +145,7 @@ export const TagsModal: React.FC<TagsModalProps> = ({
           </div>
 
           {filteredTags.length === 0 && (
-            <p className="text-center text-sm text-slate-500 py-10">
+            <p className="text-center text-sm text-slate-500 py-12">
               No tags match your search filter.
             </p>
           )}
