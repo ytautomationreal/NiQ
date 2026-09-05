@@ -4,6 +4,8 @@ import { WatchVideoDetails, ToastNotification } from '../../types/niq';
 import { TagsModal } from '../watch/TagsModal';
 import { MetadataModal } from '../watch/MetadataModal';
 import { ThumbnailModal } from '../watch/ThumbnailModal';
+import { TranscriptModal } from '../watch/TranscriptModal';
+import { CommentsModal } from '../watch/CommentsModal';
 import { ToastContainer } from '../common/Toast';
 
 export const GlobalOverlay: React.FC = () => {
@@ -51,7 +53,30 @@ export const GlobalOverlay: React.FC = () => {
         />
       )}
 
-      {/* 4. Global Toast Notifications */}
+      {/* 4. Transcript Studio Modal */}
+      {videoDetails && (
+        <TranscriptModal
+          isOpen={activeModal === 'transcript'}
+          onClose={() => modalStore.close()}
+          videoId={videoDetails.videoId}
+          videoTitle={videoDetails.title}
+          captionsList={videoDetails.captionsList || []}
+          onNotify={(msg, type) => modalStore.notify(msg, type)}
+        />
+      )}
+
+      {/* 5. Comments Extractor Modal */}
+      {videoDetails && (
+        <CommentsModal
+          isOpen={activeModal === 'comments'}
+          onClose={() => modalStore.close()}
+          videoId={videoDetails.videoId}
+          videoTitle={videoDetails.title}
+          onNotify={(msg, type) => modalStore.notify(msg, type)}
+        />
+      )}
+
+      {/* 6. Global Toast Notifications */}
       <ToastContainer
         toasts={toasts}
         onDismiss={(id) => modalStore.dismissToast(id)}

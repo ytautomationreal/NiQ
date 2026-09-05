@@ -8,6 +8,8 @@ import {
   FileCode,
   Image as ImageIcon,
   ChevronDown,
+  Subtitles,
+  MessageSquare,
 } from 'lucide-react';
 import { WatchVideoDetails } from '../../types/niq';
 import { modalStore } from '../../utils/modalStore';
@@ -161,7 +163,30 @@ export const QuickActionBar: React.FC<QuickActionBarProps> = ({ details }) => {
         )}
       </button>
 
-      {/* 3. Native Pill: Metadata Inspector */}
+      {/* 3. Native Pill: Transcript Studio */}
+      <button
+        onClick={() => modalStore.open('transcript')}
+        className="yt-native-btn"
+        title="Searchable Transcript Studio & Captions Exporter"
+      >
+        <Subtitles size={16} strokeWidth={2} />
+        <span>Transcript</span>
+        {details.captionsList && details.captionsList.length > 0 && (
+          <span className="yt-native-badge">{details.captionsList.length}</span>
+        )}
+      </button>
+
+      {/* 4. Native Pill: Comments Extractor */}
+      <button
+        onClick={() => modalStore.open('comments')}
+        className="yt-native-btn"
+        title="Deep Comment & Discussion Extractor"
+      >
+        <MessageSquare size={16} strokeWidth={2} />
+        <span>Comments</span>
+      </button>
+
+      {/* 5. Native Pill: Metadata Inspector */}
       <button
         onClick={() => modalStore.open('metadata')}
         className="yt-native-btn"
@@ -171,7 +196,7 @@ export const QuickActionBar: React.FC<QuickActionBarProps> = ({ details }) => {
         <span>Metadata</span>
       </button>
 
-      {/* 4. Native Pill: Thumbnails */}
+      {/* 6. Native Pill: Thumbnails */}
       <button
         onClick={() => modalStore.open('thumbnails')}
         className="yt-native-btn"

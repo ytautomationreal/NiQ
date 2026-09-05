@@ -1,6 +1,6 @@
 import { WatchVideoDetails, ToastNotification, NiqBridgeMessage } from '../types/niq';
 
-export type ModalType = 'tags' | 'metadata' | 'thumbnails' | null;
+export type ModalType = 'tags' | 'metadata' | 'thumbnails' | 'transcript' | 'comments' | null;
 
 type Listener = () => void;
 

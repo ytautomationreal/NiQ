@@ -28,6 +28,27 @@ export interface CaptionTrack {
   languageCode: string;
   name: string;
   baseUrl: string;
+  isTranslatable?: boolean;
+}
+
+export interface TranscriptSegment {
+  start: number;
+  duration: number;
+  text: string;
+}
+
+export interface YouTubeComment {
+  id: string;
+  authorName: string;
+  authorHandle: string;
+  authorChannelUrl: string;
+  authorAvatarUrl: string;
+  text: string;
+  publishedTimeText: string;
+  likeCount: number;
+  replyCount: number;
+  isReply: boolean;
+  parentId?: string;
 }
 
 export interface WatchVideoDetails {
@@ -56,7 +77,12 @@ export type NiqBridgeMessageType =
   | 'NIQ_PLAYER_SEEK'
   | 'NIQ_PLAYER_PAUSE'
   | 'NIQ_PLAYER_PLAY'
-  | 'NIQ_AD_OFFSETS';
+  | 'NIQ_AD_OFFSETS'
+  | 'NIQ_FETCH_COMMENTS_START'
+  | 'NIQ_FETCH_COMMENTS_PROGRESS'
+  | 'NIQ_FETCH_COMMENTS_STOP'
+  | 'NIQ_FETCH_COMMENTS_COMPLETE'
+  | 'NIQ_FETCH_COMMENTS_ERROR';
 
 export interface NiqBridgeMessage<T = any> {
   source: 'NIQ_MAIN_WORLD' | 'NIQ_ISOLATED_WORLD';
