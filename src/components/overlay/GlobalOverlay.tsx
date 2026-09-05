@@ -16,14 +16,17 @@ import { ChannelOutliersModal } from '../channel/ChannelOutliersModal';
 import { ChannelThumbnailsModal } from '../channel/ChannelThumbnailsModal';
 import { FeedOverviewModal } from '../feed/FeedOverviewModal';
 import { ListingToolsModal } from '../listing/ListingToolsModal';
+import { SuggestedVideosModal } from '../watch/SuggestedVideosModal';
 import { channelStore } from '../../utils/channelStore';
 import { feedStore } from '../../utils/feedStore';
+import { suggestedStore } from '../../utils/suggestedStore';
 import { ToastContainer } from '../common/Toast';
 
 export const GlobalOverlay: React.FC = () => {
   const [state, setState] = useState(modalStore.getState());
   const [channelState, setChannelState] = useState(channelStore.getState());
   const [feedState, setFeedState] = useState(feedStore.getState());
+  const [suggestedState, setSuggestedState] = useState(suggestedStore.getState());
 
   useEffect(() => {
     const unsubModal = modalStore.subscribe(() => {
@@ -35,10 +38,14 @@ export const GlobalOverlay: React.FC = () => {
     const unsubFeed = feedStore.subscribe(() => {
       setFeedState(feedStore.getState());
     });
+    const unsubSuggested = suggestedStore.subscribe(() => {
+      setSuggestedState(suggestedStore.getState());
+    });
     return () => {
       unsubModal();
       unsubChannel();
       unsubFeed();
+      unsubSuggested();
     };
   }, []);
 
@@ -205,7 +212,15 @@ export const GlobalOverlay: React.FC = () => {
         onNotify={(msg, type) => modalStore.notify(msg, type)}
       />
 
-      {/* 16. Global Toast Notifications */}
+      {/* 16. Suggested Videos Modal */}
+      <SuggestedVideosModal
+        isOpen={suggestedState.isModalOpen}
+        onClose={() => suggestedStore.closeModal()}
+        videos={suggestedState.videos}
+        onNotify={(msg, type) => modalStore.notify(msg, type)}
+      />
+
+      {/* 17. Global Toast Notifications */}
       <ToastContainer
         toasts={toasts}
         onDismiss={(id) => modalStore.dismissToast(id)}

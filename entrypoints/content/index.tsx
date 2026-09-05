@@ -8,11 +8,14 @@ import { ChannelActionBar } from '../../src/components/channel/ChannelActionBar'
 import { FeedActionBar } from '../../src/components/feed/FeedActionBar';
 import { SearchKeywordsBar } from '../../src/components/search/SearchKeywordsBar';
 import { ListingActionBar } from '../../src/components/listing/ListingActionBar';
+import { SuggestedActionBar } from '../../src/components/watch/SuggestedActionBar';
 import { GlobalOverlay } from '../../src/components/overlay/GlobalOverlay';
 import { modalStore } from '../../src/utils/modalStore';
 import { channelStore } from '../../src/utils/channelStore';
 import { outlierDetector } from '../../src/utils/outlierDetector';
 import { feedScanner } from '../../src/utils/feedScanner';
+import { cardActionOverlay } from '../../src/utils/cardActionOverlay';
+import { suggestedScanner } from '../../src/utils/suggestedScanner';
 import { themeStore } from '../../src/utils/themeStore';
 import styleText from './style.css?inline';
 
@@ -42,6 +45,11 @@ export default defineContentScript({
     let channelBarMountPoint: HTMLElement | null = null;
     let channelBarReactRoot: ReactDOM.Root | null = null;
 
+    // Suggested Bar Root inside Watch Sidebar
+    let suggestedBarHost: HTMLElement | null = null;
+    let suggestedBarMountPoint: HTMLElement | null = null;
+    let suggestedBarReactRoot: ReactDOM.Root | null = null;
+
     let mountObserver: MutationObserver | null = null;
 
     // Synchronize theme across all Shadow roots
@@ -53,6 +61,8 @@ export default defineContentScript({
       if (toolbarMountPoint) toolbarMountPoint.setAttribute('data-theme', theme);
       if (channelBarHost) channelBarHost.setAttribute('data-theme', theme);
       if (channelBarMountPoint) channelBarMountPoint.setAttribute('data-theme', theme);
+      if (suggestedBarHost) suggestedBarHost.setAttribute('data-theme', theme);
+      if (suggestedBarMountPoint) suggestedBarMountPoint.setAttribute('data-theme', theme);
     }
 
     themeStore.subscribe((isDark) => {
@@ -488,13 +498,68 @@ export default defineContentScript({
       return false;
     }
 
-    // 8. Observe DOM for YouTube navigation lifecycle
+    // 8. Mount Suggested Bar in Watch Page Sidebar
+    function attachSuggestedBarToDOM(): boolean {
+      if (!window.location.href.includes('/watch')) {
+        if (suggestedBarHost && suggestedBarHost.parentNode) {
+          suggestedBarHost.remove();
+        }
+        return false;
+      }
+
+      initGlobalOverlay();
+
+      if (!suggestedBarHost) {
+        suggestedBarHost = document.createElement('div');
+        suggestedBarHost.id = 'niq-suggested-bar-root';
+        suggestedBarHost.style.display = 'block';
+        suggestedBarHost.style.margin = '4px 0 8px 0';
+        suggestedBarHost.style.width = '100%';
+
+        const currentTheme = themeStore.getTheme();
+        suggestedBarHost.setAttribute('data-theme', currentTheme);
+
+        const shadow = suggestedBarHost.attachShadow({ mode: 'open' });
+        const styleElement = document.createElement('style');
+        styleElement.textContent = styleText;
+        shadow.appendChild(styleElement);
+
+        suggestedBarMountPoint = document.createElement('div');
+        suggestedBarMountPoint.className = 'niq-container';
+        suggestedBarMountPoint.setAttribute('data-theme', currentTheme);
+        shadow.appendChild(suggestedBarMountPoint);
+
+        suggestedBarReactRoot = ReactDOM.createRoot(suggestedBarMountPoint);
+        suggestedBarReactRoot.render(<SuggestedActionBar />);
+      }
+
+      const target =
+        document.querySelector('#related #items') ||
+        document.querySelector('ytd-watch-next-secondary-results-renderer #items') ||
+        document.querySelector('#related');
+
+      if (target && target.parentNode) {
+        if (suggestedBarHost.parentNode !== target.parentNode) {
+          target.parentNode.insertBefore(suggestedBarHost, target);
+        }
+        return true;
+      }
+      return false;
+    }
+
+    // 9. Observe DOM for YouTube navigation lifecycle
     function startObservers() {
       if (mountObserver) {
         mountObserver.disconnect();
       }
 
+      cardActionOverlay.start();
       attachToolbarToDOM();
+      if (window.location.href.includes('/watch')) {
+        attachSuggestedBarToDOM();
+        suggestedScanner.start();
+      }
+
       if (isChannelUrl()) {
         attachChannelBarToDOM();
         outlierDetector.start();
@@ -515,6 +580,14 @@ export default defineContentScript({
           const owner = document.querySelector('ytd-watch-metadata #top-row #owner');
           if (owner && (!toolbarHost || toolbarHost.parentNode !== owner.parentNode)) {
             attachToolbarToDOM();
+          }
+
+          const relTarget =
+            document.querySelector('#related #items') ||
+            document.querySelector('ytd-watch-next-secondary-results-renderer #items') ||
+            document.querySelector('#related');
+          if (relTarget && (!suggestedBarHost || suggestedBarHost.parentNode !== relTarget.parentNode)) {
+            attachSuggestedBarToDOM();
           }
         } else if (isChannelUrl()) {
           const target =
@@ -548,7 +621,7 @@ export default defineContentScript({
       });
     }
 
-    // 9. Initialize
+    // 10. Initialize
     function setup() {
       getNiqSettings().then((settings) => {
         currentSettings = settings;
@@ -564,9 +637,21 @@ export default defineContentScript({
       startObservers();
 
       window.addEventListener('yt-navigate-finish', () => {
+        cardActionOverlay.start();
         setTimeout(attachToolbarToDOM, 250);
         setTimeout(attachToolbarToDOM, 750);
         setTimeout(attachToolbarToDOM, 1400);
+
+        if (window.location.href.includes('/watch')) {
+          setTimeout(attachSuggestedBarToDOM, 350);
+          setTimeout(attachSuggestedBarToDOM, 1000);
+          suggestedScanner.start();
+        } else {
+          suggestedScanner.stop();
+          if (suggestedBarHost && suggestedBarHost.parentNode) {
+            suggestedBarHost.remove();
+          }
+        }
 
         if (isChannelUrl()) {
           setTimeout(attachChannelBarToDOM, 300);

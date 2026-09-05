@@ -1,23 +1,6 @@
 import { feedStore } from './feedStore';
 import { FeedVideoItem } from '../types/feed';
-
-function parseViewsText(text: string): number {
-  if (!text) return 0;
-  const match = text.match(/([\d.,]+)\s*([KkMmBb]?)\s*views?/i);
-  if (!match) {
-    const raw = text.replace(/,/g, '').match(/\d+/);
-    return raw ? parseInt(raw[0], 10) : 0;
-  }
-
-  let num = parseFloat(match[1].replace(/,/g, ''));
-  const mult = match[2].toUpperCase();
-
-  if (mult === 'K') num *= 1000;
-  else if (mult === 'M') num *= 1000000;
-  else if (mult === 'B') num *= 1000000000;
-
-  return Math.round(num);
-}
+import { parseVideoCard } from './videoCardParser';
 
 class FeedScanner {
   private observer: MutationObserver | null = null;
@@ -52,60 +35,32 @@ class FeedScanner {
   }
 
   scan() {
-    const cards = document.querySelectorAll('ytd-rich-item-renderer');
+    // Look for both modern lockup cards and classic rich item renderers
+    const cards = document.querySelectorAll<HTMLElement>(
+      'yt-lockup-view-model, ytd-rich-item-renderer'
+    );
     if (cards.length === 0) return;
 
     const items: FeedVideoItem[] = [];
+    const seenIds = new Set<string>();
 
     cards.forEach((card) => {
-      const titleEl = card.querySelector('#video-title, #video-title-link');
-      const linkEl = (card.querySelector('a#thumbnail, a#video-title-link') as HTMLAnchorElement) || null;
-      const channelEl = card.querySelector('ytd-channel-name a, #channel-name a') as HTMLAnchorElement | null;
-      const avatarEl = card.querySelector('#avatar-link img, #channel-thumbnail img') as HTMLImageElement | null;
-      const metaSpans = card.querySelectorAll('#metadata-line span');
-      const timeEl = card.querySelector('ytd-thumbnail-overlay-time-status-renderer, #time-status');
+      const parsed = parseVideoCard(card);
+      if (!parsed || !parsed.videoId || seenIds.has(parsed.videoId)) return;
 
-      if (!titleEl || !linkEl) return;
-
-      const href = linkEl.href || '';
-      const vMatch = href.match(/[?&]v=([^&]+)/);
-      if (!vMatch) return;
-      const videoId = vMatch[1];
-
-      const title = (titleEl.textContent || '').trim();
-      const channelTitle = (channelEl?.textContent || '').trim();
-      const channelUrl = channelEl?.href || '';
-      const channelAvatarUrl = avatarEl?.src || '';
-
-      let viewsText = '';
-      let publishedTimeText = '';
-
-      metaSpans.forEach((s) => {
-        const text = (s.textContent || '').trim();
-        if (text.toLowerCase().includes('view')) {
-          viewsText = text;
-        } else if (text.toLowerCase().includes('ago') || text.toLowerCase().includes('stream')) {
-          publishedTimeText = text;
-        }
-      });
-
-      const views = parseViewsText(viewsText);
-      const lengthText = (timeEl?.textContent || '').trim();
-      const imgEl = card.querySelector('ytd-thumbnail img') as HTMLImageElement | null;
-      const thumbnailUrl = imgEl?.src || `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
-
+      seenIds.add(parsed.videoId);
       items.push({
-        videoId,
-        title,
-        channelTitle,
-        channelUrl,
-        channelAvatarUrl,
-        views,
-        viewsText,
-        publishedTimeText,
-        lengthText,
-        thumbnailUrl,
-        url: `https://www.youtube.com/watch?v=${videoId}`,
+        videoId: parsed.videoId,
+        title: parsed.title,
+        channelTitle: parsed.channelTitle,
+        channelUrl: parsed.channelUrl,
+        channelAvatarUrl: parsed.channelAvatarUrl,
+        views: parsed.views,
+        viewsText: parsed.viewsText,
+        publishedTimeText: parsed.publishedTimeText,
+        lengthText: parsed.lengthText,
+        thumbnailUrl: parsed.thumbnailUrl,
+        url: parsed.url,
       });
     });
 

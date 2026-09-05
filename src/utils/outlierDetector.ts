@@ -1,23 +1,6 @@
 import { channelStore } from './channelStore';
 import { ChannelVideoItem } from '../types/channel';
-
-function parseViewsText(text: string): number {
-  if (!text) return 0;
-  const match = text.match(/([\d.,]+)\s*([KkMmBb]?)\s*views?/i);
-  if (!match) {
-    const rawNumber = text.replace(/,/g, '').match(/\d+/);
-    return rawNumber ? parseInt(rawNumber[0], 10) : 0;
-  }
-
-  let num = parseFloat(match[1].replace(/,/g, ''));
-  const multiplier = match[2].toUpperCase();
-
-  if (multiplier === 'K') num *= 1000;
-  else if (multiplier === 'M') num *= 1000000;
-  else if (multiplier === 'B') num *= 1000000000;
-
-  return Math.round(num);
-}
+import { parseVideoCard } from './videoCardParser';
 
 class OutlierDetector {
   private observer: MutationObserver | null = null;
@@ -62,8 +45,8 @@ class OutlierDetector {
     this.isScanning = true;
 
     try {
-      const cards = document.querySelectorAll(
-        'ytd-rich-item-renderer, ytd-grid-video-renderer, ytd-video-renderer'
+      const cards = document.querySelectorAll<HTMLElement>(
+        'yt-lockup-view-model, ytd-rich-item-renderer, ytd-grid-video-renderer, ytd-video-renderer'
       );
       if (cards.length === 0) {
         this.isScanning = false;
@@ -71,47 +54,22 @@ class OutlierDetector {
       }
 
       const extracted: ChannelVideoItem[] = [];
+      const seenIds = new Set<string>();
 
       cards.forEach((card) => {
-        const titleEl = card.querySelector('#video-title, #video-title-link');
-        const linkEl = (card.querySelector('a#thumbnail, a#video-title-link') as HTMLAnchorElement) || null;
-        const metaEls = card.querySelectorAll('#metadata-line span');
-        const timeEl = card.querySelector('ytd-thumbnail-overlay-time-status-renderer, #time-status');
+        const parsed = parseVideoCard(card);
+        if (!parsed || !parsed.videoId || seenIds.has(parsed.videoId)) return;
 
-        if (!titleEl || !linkEl) return;
-
-        const href = linkEl.href || '';
-        const urlMatch = href.match(/[?&]v=([^&]+)/);
-        if (!urlMatch) return;
-        const videoId = urlMatch[1];
-
-        const title = (titleEl.textContent || '').trim();
-        let viewsText = '';
-        let publishedText = '';
-
-        metaEls.forEach((m) => {
-          const t = (m.textContent || '').trim();
-          if (t.toLowerCase().includes('view')) {
-            viewsText = t;
-          } else if (t.toLowerCase().includes('ago')) {
-            publishedText = t;
-          }
-        });
-
-        const views = parseViewsText(viewsText);
-        const lengthText = (timeEl?.textContent || '').trim();
-        const imgEl = card.querySelector('ytd-thumbnail img') as HTMLImageElement | null;
-        const thumbnailUrl = imgEl?.src || `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
-
+        seenIds.add(parsed.videoId);
         extracted.push({
-          videoId,
-          title,
-          views,
-          viewCountText: viewsText,
-          publishedTimeText: publishedText,
-          lengthText,
-          thumbnailUrl,
-          url: `https://www.youtube.com/watch?v=${videoId}`,
+          videoId: parsed.videoId,
+          title: parsed.title,
+          views: parsed.views,
+          viewCountText: parsed.viewsText,
+          publishedTimeText: parsed.publishedTimeText,
+          lengthText: parsed.lengthText,
+          thumbnailUrl: parsed.thumbnailUrl,
+          url: parsed.url,
           viralRatio: 1.0,
           isOutlier: false,
         });
@@ -136,22 +94,18 @@ class OutlierDetector {
     const videoMap = new Map<string, ChannelVideoItem>();
     state.videos.forEach((v) => videoMap.set(v.videoId, v));
 
-    const cards = document.querySelectorAll(
-      'ytd-rich-item-renderer, ytd-grid-video-renderer, ytd-video-renderer'
+    const cards = document.querySelectorAll<HTMLElement>(
+      'yt-lockup-view-model, ytd-rich-item-renderer, ytd-grid-video-renderer, ytd-video-renderer'
     );
 
     cards.forEach((card) => {
-      const linkEl = (card.querySelector('a#thumbnail, a#video-title-link') as HTMLAnchorElement) || null;
-      if (!linkEl) return;
-      const href = linkEl.href || '';
-      const match = href.match(/[?&]v=([^&]+)/);
-      if (!match) return;
-      const videoId = match[1];
+      const parsed = parseVideoCard(card);
+      if (!parsed || !parsed.videoId) return;
 
-      const video = videoMap.get(videoId);
+      const video = videoMap.get(parsed.videoId);
       if (!video) return;
 
-      const thumbContainer = card.querySelector('ytd-thumbnail, #thumbnail');
+      const thumbContainer = parsed.thumbnailContainer;
       if (!thumbContainer) return;
 
       // Existing badge check
@@ -164,7 +118,7 @@ class OutlierDetector {
           badge.style.position = 'absolute';
           badge.style.top = '6px';
           badge.style.left = '6px';
-          badge.style.zIndex = '10';
+          badge.style.zIndex = '30';
           badge.style.display = 'inline-flex';
           badge.style.alignItems = 'center';
           badge.style.gap = '4px';
@@ -180,7 +134,10 @@ class OutlierDetector {
           badge.style.cursor = 'default';
           badge.style.lineHeight = '1';
 
-          (thumbContainer as HTMLElement).style.position = 'relative';
+          const computedStyle = window.getComputedStyle(thumbContainer);
+          if (computedStyle.position === 'static') {
+            thumbContainer.style.position = 'relative';
+          }
           thumbContainer.appendChild(badge);
         }
 
