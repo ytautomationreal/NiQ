@@ -13,8 +13,14 @@ export default defineBackground(() => {
     }
 
     if (details.reason === 'install') {
-      // Future Phase: Open welcome / changelog tab
-      console.log('[NiQ Background] Fresh install detected.');
+      console.log('[NiQ Background] Fresh install detected. Opening Welcome & Guide...');
+      try {
+        chrome.tabs.create({
+          url: chrome.runtime.getURL('welcome.html'),
+        });
+      } catch (err) {
+        console.error('[NiQ Background] Failed to open welcome page:', err);
+      }
     }
   });
 

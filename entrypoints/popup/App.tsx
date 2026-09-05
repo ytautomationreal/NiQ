@@ -15,6 +15,7 @@ import {
   ExternalLink,
   ShieldCheck,
   Layers,
+  Sparkles,
 } from 'lucide-react';
 import { DEFAULT_SETTINGS, NiqSettings } from '../../src/types/niq';
 import { getNiqSettings, saveNiqSettings } from '../../src/utils/storage';
@@ -261,18 +262,33 @@ export const App: React.FC = () => {
           title="Reset all settings to initial defaults"
         >
           <RotateCcw size={13} />
-          <span>Reset Defaults</span>
+          <span>Reset</span>
+        </button>
+
+        <button
+          onClick={() => {
+            if (typeof chrome !== 'undefined' && chrome.tabs) {
+              chrome.tabs.create({ url: chrome.runtime.getURL('welcome.html') });
+            } else {
+              window.open('/welcome.html', '_blank');
+            }
+          }}
+          className="flex items-center space-x-1.5 text-cyan-400 hover:text-cyan-300 font-medium transition-colors py-1 px-2.5 rounded-full bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/20 shadow-sm"
+          title="Open complete 37-feature interactive guide"
+        >
+          <Sparkles size={13} />
+          <span>Feature Guide</span>
         </button>
 
         <a
           href="https://github.com/ytautomationreal/NiQ"
           target="_blank"
           rel="noreferrer"
-          className="flex items-center space-x-1.5 text-slate-400 hover:text-blue-400 transition-colors py-1 px-2 rounded hover:bg-white/5"
+          className="flex items-center space-x-1 text-slate-400 hover:text-slate-200 transition-colors py-1 px-2 rounded hover:bg-white/5"
         >
           <ShieldCheck size={13} />
-          <span>NiQ Engine</span>
-          <ExternalLink size={11} className="opacity-70" />
+          <span>v1.0</span>
+          <ExternalLink size={10} className="opacity-70 ml-0.5" />
         </a>
       </div>
     </div>
