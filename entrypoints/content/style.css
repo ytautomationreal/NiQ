@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 /* Scoped styles for NiQ Shadow DOM */
 :host {
   all: initial;
@@ -12,117 +16,45 @@
   box-sizing: border-box;
 }
 
-/* Base Utility Classes */
 .niq-container {
   position: relative;
-  z-index: 9999;
+  z-index: 2147483647;
 }
 
-/* Floating Action Toolbar on YouTube Player */
+/* Floating Action Toolbar on YouTube Watch Page */
 .niq-player-toolbar {
-  position: absolute;
-  top: 14px;
-  right: 14px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 8px;
-  background: rgba(11, 12, 16, 0.88);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 8px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-  z-index: 999;
-  transition: opacity 0.2s ease, transform 0.2s ease;
-}
-
-.niq-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 6px 10px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 500;
-  color: #cbd5e1;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  cursor: pointer;
-  transition: all 0.15s ease;
-  user-select: none;
-}
-
-.niq-btn:hover {
-  background: rgba(255, 255, 255, 0.12);
-  color: #ffffff;
-  border-color: rgba(59, 130, 246, 0.4);
-}
-
-.niq-btn-primary {
-  background: #2563eb;
-  color: #ffffff;
-  border-color: #3b82f6;
-}
-
-.niq-btn-primary:hover {
-  background: #1d4ed8;
-  border-color: #60a5fa;
-  box-shadow: 0 0 12px rgba(37, 99, 235, 0.4);
-}
-
-.niq-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 2px 7px;
-  border-radius: 4px;
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-}
-
-.niq-badge-outlier {
-  background: rgba(239, 68, 68, 0.15);
-  color: #f87171;
-  border: 1px solid rgba(239, 68, 68, 0.35);
-}
-
-.niq-badge-active {
-  background: rgba(59, 130, 246, 0.15);
-  color: #60a5fa;
-  border: 1px solid rgba(59, 130, 246, 0.35);
-}
-
-/* Toast Notifications */
-.niq-toast {
   position: fixed;
-  bottom: 24px;
+  top: 66px;
   right: 24px;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 16px;
-  background: #0f121a;
-  border: 1px solid rgba(59, 130, 246, 0.3);
-  border-radius: 8px;
-  color: #f1f5f9;
-  font-size: 12px;
-  font-weight: 500;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), 0 0 15px rgba(59, 130, 246, 0.2);
-  z-index: 100000;
-  animation: niq-slide-in 0.2s ease-out;
+  gap: 6px;
+  padding: 5px 8px;
+  background: rgba(11, 13, 20, 0.94);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.75), 0 0 15px rgba(59, 130, 246, 0.15);
+  z-index: 2147483647;
+  transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
-@keyframes niq-slide-in {
+.niq-player-toolbar:hover {
+  border-color: rgba(59, 130, 246, 0.4);
+}
+
+@keyframes niq-fade-in {
   from {
-    transform: translateY(16px);
     opacity: 0;
+    transform: translateY(-4px);
   }
   to {
-    transform: translateY(0);
     opacity: 1;
+    transform: translateY(0);
   }
+}
+
+.animate-fade-in {
+  animation: niq-fade-in 0.18s ease-out forwards;
 }

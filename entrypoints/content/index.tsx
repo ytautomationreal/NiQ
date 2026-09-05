@@ -1,6 +1,9 @@
 import { defineContentScript } from 'wxt/sandbox';
+import React, { useEffect, useState } from 'react';
+import ReactDOM from 'react-dom/client';
 import { getNiqSettings, onNiqSettingsChange } from '../../src/utils/storage';
-import { NiqBridgeMessage, NiqSettings } from '../../src/types/niq';
+import { NiqBridgeMessage, NiqSettings, WatchVideoDetails } from '../../src/types/niq';
+import { QuickActionBar } from '../../src/components/watch/QuickActionBar';
 import styleText from './style.css?inline';
 
 export default defineContentScript({
@@ -9,12 +12,12 @@ export default defineContentScript({
   cssInjectionMode: 'manual',
 
   main() {
-    console.log('[NiQ Engine] Content script initialized on YouTube.');
+    console.log('[NiQ Engine] Content script active.');
 
+    let reactRoot: ReactDOM.Root | null = null;
     let currentSettings: NiqSettings | null = null;
-    let cachedPlayerResponse: any = null;
-    let shadowRoot: ShadowRoot | null = null;
-    let mountContainer: HTMLElement | null = null;
+    let videoDetails: WatchVideoDetails | null = null;
+    let listenersBound = false;
 
     // 1. Inject Main-World bridge script
     function injectMainWorldScript() {
@@ -23,13 +26,13 @@ export default defineContentScript({
         script.src = chrome.runtime.getURL('injected.js');
         script.onload = () => script.remove();
         (document.head || document.documentElement).appendChild(script);
-        console.log('[NiQ Engine] Main-World bridge injected.');
+        console.log('[NiQ Engine] Main-World bridge loaded.');
       } catch (err) {
-        console.error('[NiQ Engine] Script injection failed:', err);
+        console.error('[NiQ Engine] Bridge injection error:', err);
       }
     }
 
-    // 2. Manage Shorts visibility based on settings
+    // 2. Shorts Filter Management
     function updateShortsVisibility(hide: boolean) {
       const styleId = 'niq-shorts-filter';
       let styleTag = document.getElementById(styleId) as HTMLStyleElement | null;
@@ -49,15 +52,68 @@ export default defineContentScript({
             }
           `;
           (document.head || document.documentElement).appendChild(styleTag);
-          console.log('[NiQ Filter] Shorts filter activated.');
+          console.log('[NiQ Filter] Shorts hidden.');
         }
       } else if (styleTag) {
         styleTag.remove();
-        console.log('[NiQ Filter] Shorts filter deactivated.');
+        console.log('[NiQ Filter] Shorts restored.');
       }
     }
 
-    // 3. Initialize Shadow DOM UI container
+    // 3. React Root Wrapper Component
+    const NiqWatchWrapper: React.FC = () => {
+      const [settings, setSettings] = useState<NiqSettings | null>(currentSettings);
+      const [details, setDetails] = useState<WatchVideoDetails | null>(videoDetails);
+      const [isWatch, setIsWatch] = useState(window.location.href.includes('/watch'));
+
+      useEffect(() => {
+        const unsubscribe = onNiqSettingsChange((updated) => {
+          setSettings(updated);
+        });
+
+        const handleMessage = (event: MessageEvent) => {
+          if (event.source !== window || !event.data || event.data.source !== 'NIQ_MAIN_WORLD') {
+            return;
+          }
+          const msg: NiqBridgeMessage = event.data;
+          if (msg.type === 'NIQ_PLAYER_RESPONSE') {
+            setDetails(msg.payload);
+          }
+        };
+
+        const handleNavigation = () => {
+          const watch = window.location.href.includes('/watch');
+          setIsWatch(watch);
+          if (watch) {
+            window.postMessage(
+              {
+                source: 'NIQ_ISOLATED_WORLD',
+                type: 'NIQ_REQUEST_PLAYER_STATE',
+                payload: {},
+              } as NiqBridgeMessage,
+              '*'
+            );
+          }
+        };
+
+        window.addEventListener('message', handleMessage);
+        window.addEventListener('yt-navigate-finish', handleNavigation);
+
+        return () => {
+          unsubscribe();
+          window.removeEventListener('message', handleMessage);
+          window.removeEventListener('yt-navigate-finish', handleNavigation);
+        };
+      }, []);
+
+      if (!isWatch || !settings?.quickActionBar || !details) {
+        return null;
+      }
+
+      return <QuickActionBar details={details} />;
+    };
+
+    // 4. Initialize Shadow DOM UI Host
     function initShadowRoot() {
       if (document.getElementById('niq-root')) {
         return;
@@ -68,73 +124,52 @@ export default defineContentScript({
       hostElement.style.position = 'relative';
       hostElement.style.zIndex = '2147483647';
 
-      shadowRoot = hostElement.attachShadow({ mode: 'open' });
+      const shadow = hostElement.attachShadow({ mode: 'open' });
 
-      // Inject scoped CSS
+      // Inject Scoped Stylesheet
       const styleElement = document.createElement('style');
       styleElement.textContent = styleText;
-      shadowRoot.appendChild(styleElement);
+      shadow.appendChild(styleElement);
 
-      mountContainer = document.createElement('div');
-      mountContainer.className = 'niq-container';
-      shadowRoot.appendChild(mountContainer);
+      const mountPoint = document.createElement('div');
+      mountPoint.className = 'niq-container';
+      shadow.appendChild(mountPoint);
 
       document.body.appendChild(hostElement);
-      console.log('[NiQ Engine] Shadow DOM mounted.');
+
+      // Mount React App inside Shadow DOM
+      reactRoot = ReactDOM.createRoot(mountPoint);
+      reactRoot.render(<NiqWatchWrapper />);
+      console.log('[NiQ Engine] Shadow DOM & React Root mounted.');
     }
 
-    // 4. Handle messages from the Main-World script
-    window.addEventListener('message', (event) => {
-      if (event.source !== window || !event.data || event.data.source !== 'NIQ_MAIN_WORLD') {
-        return;
-      }
+    // 5. Lifecycle Initialization
+    function setup() {
+      if (listenersBound) return;
+      listenersBound = true;
 
-      const msg: NiqBridgeMessage = event.data;
-      if (msg.type === 'NIQ_PLAYER_RESPONSE') {
-        cachedPlayerResponse = msg.payload;
-        console.log('[NiQ Engine] Captured player response for video:', cachedPlayerResponse?.videoDetails?.title);
-      }
-    });
-
-    // 5. Lifecycle routing for YouTube SPA navigation
-    function handleYouTubeNavigation() {
-      const url = window.location.href;
       initShadowRoot();
 
-      if (url.includes('/watch')) {
-        console.log('[NiQ Router] Detected Watch page.');
-        // Request fresh player state from Main World
-        window.postMessage(
-          {
-            source: 'NIQ_ISOLATED_WORLD',
-            type: 'NIQ_REQUEST_PLAYER_STATE',
-            payload: {},
-          } as NiqBridgeMessage,
-          '*'
-        );
-      } else if (url.includes('/channel/') || url.includes('/@')) {
-        console.log('[NiQ Router] Detected Channel page.');
-      } else if (url.includes('/results')) {
-        console.log('[NiQ Router] Detected Search page.');
-      } else {
-        console.log('[NiQ Router] Detected Feed / Other page.');
-      }
+      getNiqSettings().then((settings) => {
+        currentSettings = settings;
+        updateShortsVisibility(settings.hideShorts);
+        injectMainWorldScript();
+      });
+
+      onNiqSettingsChange((newSettings) => {
+        currentSettings = newSettings;
+        updateShortsVisibility(newSettings.hideShorts);
+      });
+
+      window.addEventListener('yt-navigate-finish', () => {
+        initShadowRoot();
+      });
     }
 
-    // Initialize settings and listeners
-    getNiqSettings().then((settings) => {
-      currentSettings = settings;
-      updateShortsVisibility(settings.hideShorts);
-      injectMainWorldScript();
-    });
-
-    onNiqSettingsChange((newSettings) => {
-      currentSettings = newSettings;
-      updateShortsVisibility(newSettings.hideShorts);
-    });
-
-    // Listen for YouTube internal SPA navigation events
-    window.addEventListener('yt-navigate-finish', handleYouTubeNavigation);
-    window.addEventListener('DOMContentLoaded', handleYouTubeNavigation);
+    if (document.body) {
+      setup();
+    } else {
+      window.addEventListener('DOMContentLoaded', setup);
+    }
   },
 });

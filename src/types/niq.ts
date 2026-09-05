@@ -24,46 +24,29 @@ export const DEFAULT_SETTINGS: NiqSettings = {
   cropRecorder: true,
 };
 
-export interface VideoMetadata {
-  id: string;
-  url: string;
+export interface CaptionTrack {
+  languageCode: string;
+  name: string;
+  baseUrl: string;
+}
+
+export interface WatchVideoDetails {
+  videoId: string;
   title: string;
   channelTitle: string;
   channelId: string;
-  channelHandle?: string;
   views: number;
+  lengthSeconds: number;
   publishDate: string;
-  exactUploadDate?: string;
-  durationSeconds: number;
-  durationFormatted: string;
-  category?: string;
+  category: string;
   tags: string[];
   description: string;
   isLive: boolean;
-  thumbnails: {
-    maxres?: string;
-    hq?: string;
-    mq?: string;
-    default?: string;
-  };
   captionsAvailable: boolean;
-  adPlacements?: number[];
-  storyboardUrl?: string;
-}
-
-export interface ChannelMetadata {
-  id: string;
-  title: string;
-  handle: string;
-  subscribers: string;
-  subscribersCount?: number;
-  videosCount: string;
-  description: string;
-  joinedDate?: string;
-  tags: string[];
-  bannerUrl?: string;
-  avatarUrl?: string;
-  medianViews?: number;
+  captionsList: CaptionTrack[];
+  storyboards: string;
+  adPlacements: any[];
+  currentTime: number;
 }
 
 export type NiqBridgeMessageType =
@@ -77,4 +60,10 @@ export interface NiqBridgeMessage<T = any> {
   source: 'NIQ_MAIN_WORLD' | 'NIQ_ISOLATED_WORLD';
   type: NiqBridgeMessageType;
   payload: T;
+}
+
+export interface ToastNotification {
+  id: string;
+  message: string;
+  type?: 'success' | 'info' | 'error';
 }
