@@ -45,11 +45,11 @@ export const ThumbnailModal: React.FC<ThumbnailModalProps> = ({
     selectedFormat === 'jpg'
       ? [
           {
-            label: 'Maximum Resolution (HD/4K)',
+            label: 'Maximum Resolution (HD / 4K)',
             resolution: '1920 × 1080',
             format: 'jpg',
             url: `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`,
-            badge: 'Best Quality',
+            badge: 'Original 1080p',
           },
           {
             label: 'High Quality (HQ)',
@@ -76,7 +76,7 @@ export const ThumbnailModal: React.FC<ThumbnailModalProps> = ({
             resolution: '1920 × 1080',
             format: 'webp',
             url: `https://i.ytimg.com/vi_webp/${videoId}/maxresdefault.webp`,
-            badge: 'Modern WebP',
+            badge: 'Optimized WebP',
           },
           {
             label: 'High Quality (WebP)',
@@ -171,19 +171,19 @@ export const ThumbnailModal: React.FC<ThumbnailModalProps> = ({
       title="Thumbnail Asset Studio"
       subtitle={videoTitle || videoId}
       icon={ImageIcon}
-      badge="Multi-Res"
-      maxWidth="2xl"
+      badge="Multi-Resolution"
+      size="5xl"
     >
-      <div className="space-y-4">
+      <div className="space-y-6">
         {/* Controls Bar */}
-        <div className="flex items-center justify-between pb-3 border-b border-white/5">
+        <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center justify-between pb-4 border-b border-white/10">
           {/* Format Switcher */}
-          <div className="flex items-center space-x-1.5 p-1 bg-[#141724] rounded-lg border border-white/5">
+          <div className="flex items-center space-x-2 p-1.5 bg-[#141726] rounded-xl border border-white/5">
             <button
               onClick={() => setSelectedFormat('jpg')}
-              className={`px-3 py-1 rounded text-xs font-semibold transition-all ${
+              className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${
                 selectedFormat === 'jpg'
-                  ? 'bg-blue-600 text-white shadow-sm'
+                  ? 'bg-blue-600 text-white shadow-md'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
@@ -191,9 +191,9 @@ export const ThumbnailModal: React.FC<ThumbnailModalProps> = ({
             </button>
             <button
               onClick={() => setSelectedFormat('webp')}
-              className={`px-3 py-1 rounded text-xs font-semibold transition-all ${
+              className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${
                 selectedFormat === 'webp'
-                  ? 'bg-blue-600 text-white shadow-sm'
+                  ? 'bg-blue-600 text-white shadow-md'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
@@ -203,82 +203,85 @@ export const ThumbnailModal: React.FC<ThumbnailModalProps> = ({
 
           <Button
             variant="primary"
-            size="sm"
+            size="md"
             icon={Archive}
             onClick={handleDownloadAllZip}
             disabled={isZipping}
           >
-            {isZipping ? 'Packaging ZIP...' : 'Download All as ZIP'}
+            {isZipping ? 'Packaging ZIP Archive...' : 'Download All as ZIP Archive'}
           </Button>
         </div>
 
-        {/* Thumbnail Options Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 max-h-[420px] overflow-y-auto pr-1">
+        {/* Thumbnail Options Grid - Generous, Crisp, Large */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-h-[600px] overflow-y-auto pr-2">
           {thumbnailOptions.map((opt, idx) => (
             <div
               key={idx}
-              className="group flex flex-col rounded-lg bg-[#141724] border border-white/10 hover:border-blue-500/40 overflow-hidden transition-all duration-150"
+              className="group flex flex-col rounded-2xl bg-[#141726] border border-white/10 hover:border-blue-500/50 overflow-hidden shadow-lg transition-all duration-200"
             >
               {/* Image Preview Container */}
-              <div className="relative aspect-video bg-black/50 overflow-hidden flex items-center justify-center">
+              <div className="relative aspect-video bg-black/60 overflow-hidden flex items-center justify-center">
                 <img
                   src={opt.url}
                   alt={opt.label}
-                  className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-[1.02]"
+                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
                   loading="lazy"
                   onError={(e) => {
-                    // Fallback for missing maxresdefault
                     if (opt.url.includes('maxresdefault')) {
                       (e.target as HTMLImageElement).src = `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
                     }
                   }}
                 />
                 {opt.badge && (
-                  <span className="absolute top-2 left-2 px-1.5 py-0.5 rounded text-[10px] font-mono uppercase font-semibold bg-blue-600/80 backdrop-blur-sm text-white border border-blue-400/30">
+                  <span className="absolute top-3 left-3 px-2.5 py-1 rounded-md text-xs font-mono uppercase font-bold bg-blue-600/90 backdrop-blur-md text-white border border-blue-400/40 shadow-md">
                     {opt.badge}
                   </span>
                 )}
-                <span className="absolute bottom-2 right-2 px-1.5 py-0.5 rounded text-[10px] font-mono bg-black/75 backdrop-blur-sm text-slate-300">
+                <span className="absolute bottom-3 right-3 px-2.5 py-1 rounded-md text-xs font-mono font-semibold bg-black/80 backdrop-blur-md text-slate-200 border border-white/10">
                   {opt.resolution}
                 </span>
               </div>
 
               {/* Card Meta & Actions */}
-              <div className="p-3 flex items-center justify-between border-t border-white/5">
+              <div className="p-4 flex items-center justify-between border-t border-white/5 bg-[#121522]">
                 <div>
-                  <div className="text-xs font-semibold text-slate-200">{opt.label}</div>
-                  <div className="text-[11px] text-slate-400 uppercase font-mono mt-0.5">
-                    {opt.format} • {opt.resolution}
+                  <div className="text-sm font-semibold text-slate-100">{opt.label}</div>
+                  <div className="text-xs text-slate-400 uppercase font-mono mt-1">
+                    {opt.format.toUpperCase()} • {opt.resolution}
                   </div>
                 </div>
 
-                <div className="flex items-center space-x-1.5">
+                <div className="flex items-center space-x-2">
                   <button
                     onClick={() => handleCopyLink(opt.url)}
-                    className="p-1.5 rounded bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white transition-colors border border-white/5"
+                    className="flex items-center space-x-1.5 px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white transition-colors border border-white/5 text-xs font-medium"
                     title="Copy direct image URL"
                   >
                     {copiedUrl === opt.url ? (
-                      <Check size={13} className="text-emerald-400" />
+                      <Check size={14} className="text-emerald-400" />
                     ) : (
-                      <Copy size={13} />
+                      <Copy size={14} />
                     )}
+                    <span>Link</span>
                   </button>
+
                   <a
                     href={opt.url}
                     target="_blank"
                     rel="noreferrer"
-                    className="p-1.5 rounded bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white transition-colors border border-white/5"
+                    className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white transition-colors border border-white/5"
                     title="Open full size in new tab"
                   >
-                    <ExternalLink size={13} />
+                    <ExternalLink size={15} />
                   </a>
+
                   <button
                     onClick={() => handleDownloadSingle(opt)}
-                    className="p-1.5 rounded bg-blue-600 hover:bg-blue-500 text-white transition-colors shadow-sm"
+                    className="flex items-center space-x-1.5 px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white transition-all shadow-md text-xs font-semibold"
                     title="Download image file"
                   >
-                    <Download size={13} />
+                    <Download size={14} />
+                    <span>Download</span>
                   </button>
                 </div>
               </div>
