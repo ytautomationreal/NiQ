@@ -2,20 +2,96 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Root variables scoped to Shadow DOM with dynamic Dark/Light modes */
+:host, [data-theme="dark"] {
+  --yt-bg-base: #0f0f0f;
+  --yt-dialog-bg: #212121;
+  --yt-dialog-header-border: rgba(255, 255, 255, 0.1);
+  --yt-dialog-card-bg: rgba(255, 255, 255, 0.06);
+  --yt-dialog-card-hover: rgba(255, 255, 255, 0.1);
+  --yt-dialog-card-border: rgba(255, 255, 255, 0.1);
+  --yt-text-primary: #f1f1f1;
+  --yt-text-secondary: #aaaaaa;
+  --yt-text-tertiary: #717171;
+  --yt-pill-bg: rgba(255, 255, 255, 0.1);
+  --yt-pill-hover: rgba(255, 255, 255, 0.2);
+  --yt-pill-active: rgba(255, 255, 255, 0.25);
+  --yt-pill-text: #f1f1f1;
+  --yt-btn-primary-bg: #f1f1f1;
+  --yt-btn-primary-text: #0f0f0f;
+  --yt-btn-primary-hover: #d9d9d9;
+  --yt-chip-active-bg: #f1f1f1;
+  --yt-chip-active-text: #0f0f0f;
+  --yt-chip-inactive-bg: rgba(255, 255, 255, 0.1);
+  --yt-chip-inactive-text: #f1f1f1;
+  --yt-chip-inactive-hover: rgba(255, 255, 255, 0.2);
+  --yt-input-bg: #121212;
+  --yt-input-border: rgba(255, 255, 255, 0.2);
+  --yt-input-focus: #3ea6ff;
+  --yt-menu-bg: #282828;
+  --yt-menu-border: rgba(255, 255, 255, 0.1);
+  --yt-menu-shadow: 0 4px 32px rgba(0, 0, 0, 0.6);
+  --yt-menu-item-hover: rgba(255, 255, 255, 0.1);
+  --yt-dialog-shadow: 0 16px 48px rgba(0, 0, 0, 0.85);
+  --yt-backdrop-bg: rgba(0, 0, 0, 0.65);
+  --yt-link-color: #3ea6ff;
+  --yt-badge-bg: rgba(255, 255, 255, 0.15);
+  --yt-badge-text: #ffffff;
+  --yt-code-bg: #121212;
+}
+
+:host([data-theme="light"]), [data-theme="light"] {
+  --yt-bg-base: #ffffff;
+  --yt-dialog-bg: #ffffff;
+  --yt-dialog-header-border: rgba(0, 0, 0, 0.1);
+  --yt-dialog-card-bg: #f2f2f2;
+  --yt-dialog-card-hover: #e8e8e8;
+  --yt-dialog-card-border: rgba(0, 0, 0, 0.08);
+  --yt-text-primary: #0f0f0f;
+  --yt-text-secondary: #606060;
+  --yt-text-tertiary: #909090;
+  --yt-pill-bg: rgba(0, 0, 0, 0.05);
+  --yt-pill-hover: rgba(0, 0, 0, 0.1);
+  --yt-pill-active: rgba(0, 0, 0, 0.15);
+  --yt-pill-text: #0f0f0f;
+  --yt-btn-primary-bg: #0f0f0f;
+  --yt-btn-primary-text: #ffffff;
+  --yt-btn-primary-hover: #272727;
+  --yt-chip-active-bg: #0f0f0f;
+  --yt-chip-active-text: #ffffff;
+  --yt-chip-inactive-bg: rgba(0, 0, 0, 0.05);
+  --yt-chip-inactive-text: #0f0f0f;
+  --yt-chip-inactive-hover: rgba(0, 0, 0, 0.1);
+  --yt-input-bg: #ffffff;
+  --yt-input-border: rgba(0, 0, 0, 0.2);
+  --yt-input-focus: #065fd4;
+  --yt-menu-bg: #ffffff;
+  --yt-menu-border: rgba(0, 0, 0, 0.1);
+  --yt-menu-shadow: 0 4px 32px rgba(0, 0, 0, 0.15);
+  --yt-menu-item-hover: rgba(0, 0, 0, 0.05);
+  --yt-dialog-shadow: 0 16px 48px rgba(0, 0, 0, 0.25);
+  --yt-backdrop-bg: rgba(0, 0, 0, 0.45);
+  --yt-link-color: #065fd4;
+  --yt-badge-bg: rgba(0, 0, 0, 0.06);
+  --yt-badge-text: #0f0f0f;
+  --yt-code-bg: #f8f8f8;
+}
+
 /* Scoped styles for NiQ Shadow DOM */
 :host {
   all: initial;
   display: inline-flex;
   align-items: center;
-  font-family: 'Roboto', 'YouTube Noto', Roboto, Arial, sans-serif;
-  color: #f1f1f1;
+  font-family: 'Roboto', 'YouTube Sans', 'Segoe UI', Arial, sans-serif;
+  color: var(--yt-text-primary);
   font-size: 14px;
-  line-height: 1;
+  line-height: 1.4;
   box-sizing: border-box;
 }
 
 *, *::before, *::after {
   box-sizing: border-box;
+  font-family: 'Roboto', 'YouTube Sans', 'Segoe UI', Arial, sans-serif;
 }
 
 .niq-container {
@@ -34,48 +110,78 @@
   user-select: none;
 }
 
-/* Native YouTube Pill Button */
+/* Native YouTube Standard Pill Button */
 .yt-native-btn {
   height: 36px;
   padding: 0 14px;
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.1);
-  color: #f1f1f1;
+  background: var(--yt-pill-bg);
+  color: var(--yt-pill-text);
   font-size: 14px;
   font-weight: 500;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 7px;
+  gap: 6px;
   border: none;
   cursor: pointer;
   transition: background-color 0.15s cubic-bezier(0.05, 0, 0, 1);
   white-space: nowrap;
   letter-spacing: normal;
   text-transform: none;
+  user-select: none;
 }
 
 .yt-native-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--yt-pill-hover);
 }
 
 .yt-native-btn:active {
-  background: rgba(255, 255, 255, 0.25);
+  background: var(--yt-pill-active);
 }
 
-/* Native YouTube Split Pill Button (e.g., Like/Dislike style) */
+/* YouTube Native Primary Pill Button (Inverted Solid) */
+.yt-native-btn-primary {
+  height: 36px;
+  padding: 0 16px;
+  border-radius: 18px;
+  background: var(--yt-btn-primary-bg);
+  color: var(--yt-btn-primary-text);
+  font-size: 14px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.15s cubic-bezier(0.05, 0, 0, 1);
+  white-space: nowrap;
+  user-select: none;
+}
+
+.yt-native-btn-primary:hover {
+  background: var(--yt-btn-primary-hover);
+}
+
+.yt-native-btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Native YouTube Split Pill Button (Like/Dislike style) */
 .yt-native-btn-split {
   display: inline-flex;
   align-items: center;
   height: 36px;
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--yt-pill-bg);
   overflow: hidden;
   transition: background-color 0.15s ease;
 }
 
 .yt-native-btn-split:hover {
-  background: rgba(255, 255, 255, 0.15);
+  background: var(--yt-pill-hover);
 }
 
 .yt-native-btn-split-main {
@@ -83,10 +189,10 @@
   padding: 0 12px 0 14px;
   display: inline-flex;
   align-items: center;
-  gap: 7px;
+  gap: 6px;
   background: transparent;
   border: none;
-  color: #f1f1f1;
+  color: var(--yt-pill-text);
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
@@ -94,13 +200,13 @@
 }
 
 .yt-native-btn-split-main:hover {
-  background: rgba(255, 255, 255, 0.12);
+  background: var(--yt-pill-hover);
 }
 
 .yt-native-btn-split-divider {
   width: 1px;
   height: 20px;
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--yt-dialog-header-border);
 }
 
 .yt-native-btn-split-menu {
@@ -111,13 +217,69 @@
   justify-content: center;
   background: transparent;
   border: none;
-  color: #f1f1f1;
+  color: var(--yt-pill-text);
   cursor: pointer;
   transition: background-color 0.15s ease;
 }
 
 .yt-native-btn-split-menu:hover {
-  background: rgba(255, 255, 255, 0.12);
+  background: var(--yt-pill-hover);
+}
+
+/* YouTube Native Circular Icon Button */
+.yt-native-icon-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--yt-text-primary);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  flex-shrink: 0;
+}
+
+.yt-native-icon-btn:hover {
+  background: var(--yt-pill-hover);
+}
+
+.yt-native-icon-btn:active {
+  background: var(--yt-pill-active);
+}
+
+/* YouTube Native Chip (Filter toggle) */
+.yt-native-chip {
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.yt-native-chip-active {
+  background: var(--yt-chip-active-bg);
+  color: var(--yt-chip-active-text);
+}
+
+.yt-native-chip-inactive {
+  background: var(--yt-chip-inactive-bg);
+  color: var(--yt-chip-inactive-text);
+}
+
+.yt-native-chip-inactive:hover {
+  background: var(--yt-chip-inactive-hover);
 }
 
 /* YouTube Native Dropdown Menu */
@@ -126,12 +288,12 @@
   top: calc(100% + 6px);
   left: 0;
   min-width: 220px;
-  background: #282828;
+  background: var(--yt-menu-bg);
   border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--yt-menu-shadow);
   padding: 8px 0;
   z-index: 2147483647;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--yt-menu-border);
   overflow: hidden;
 }
 
@@ -143,7 +305,7 @@
   padding: 10px 16px;
   background: transparent;
   border: none;
-  color: #f1f1f1;
+  color: var(--yt-text-primary);
   font-size: 14px;
   font-weight: 400;
   text-align: left;
@@ -152,22 +314,110 @@
 }
 
 .yt-native-menu-item:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--yt-menu-item-hover);
 }
 
 .yt-native-menu-item-sub {
   font-size: 11px;
-  color: #aaaaaa;
+  color: var(--yt-text-secondary);
   margin-top: 2px;
-  font-family: 'Roboto', sans-serif;
 }
 
+/* YouTube Native Badge */
 .yt-native-badge {
   font-size: 11px;
   font-weight: 600;
-  padding: 1px 6px;
+  padding: 2px 7px;
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.15);
-  color: #ffffff;
+  background: var(--yt-badge-bg);
+  color: var(--yt-badge-text);
   margin-left: 2px;
+}
+
+/* YouTube Native Dialog Surface */
+.yt-native-dialog {
+  background: var(--yt-dialog-bg);
+  color: var(--yt-text-primary);
+  border: 1px solid var(--yt-dialog-header-border);
+  border-radius: 12px;
+  box-shadow: var(--yt-dialog-shadow);
+}
+
+.yt-native-card {
+  background: var(--yt-dialog-card-bg);
+  border: 1px solid var(--yt-dialog-card-border);
+  border-radius: 8px;
+}
+
+.yt-native-card:hover {
+  background: var(--yt-dialog-card-hover);
+}
+
+/* YouTube Native Underline Tabs */
+.yt-native-tab {
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+  position: relative;
+}
+
+.yt-native-tab-active {
+  color: var(--yt-text-primary);
+  border-bottom: 2px solid var(--yt-text-primary);
+}
+
+.yt-native-tab-inactive {
+  color: var(--yt-text-secondary);
+  border-bottom: 2px solid transparent;
+}
+
+.yt-native-tab-inactive:hover {
+  color: var(--yt-text-primary);
+}
+
+/* YouTube Native Input */
+.yt-native-input {
+  background: var(--yt-input-bg);
+  border: 1px solid var(--yt-input-border);
+  color: var(--yt-text-primary);
+  border-radius: 18px;
+  padding: 0 16px;
+  height: 36px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.yt-native-input:focus {
+  border-color: var(--yt-input-focus);
+}
+
+.yt-native-input::placeholder {
+  color: var(--yt-text-secondary);
+}
+
+/* Custom Scrollbar that strictly matches YouTube */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(128, 128, 128, 0.4);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(128, 128, 128, 0.7);
 }

@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Tag, Copy, Hash, List, Search, Check } from 'lucide-react';
 import { Modal } from '../common/Modal';
-import { Button } from '../common/Button';
 
 interface TagsModalProps {
   isOpen: boolean;
@@ -61,83 +60,80 @@ export const TagsModal: React.FC<TagsModalProps> = ({
       subtitle={videoTitle || 'Current Video'}
       icon={Tag}
       badge={`${tags.length} Tags`}
+      maxWidth="max-w-[960px]"
     >
       {tags.length === 0 ? (
-        <div className="py-20 text-center text-slate-400 flex-1 flex flex-col items-center justify-center">
-          <Tag size={48} className="text-slate-600 mb-4" />
-          <p className="text-lg font-bold text-slate-200">No embedded tags found</p>
-          <p className="text-sm text-slate-400 mt-2 max-w-md mx-auto">
+        <div className="py-16 text-center flex-1 flex flex-col items-center justify-center">
+          <Tag size={40} className="text-[var(--yt-text-secondary)] opacity-50 mb-3" />
+          <p className="text-base font-semibold text-[var(--yt-text-primary)]">
+            No public search tags found
+          </p>
+          <p className="text-xs text-[var(--yt-text-secondary)] mt-1 max-w-sm mx-auto">
             The creator has not attached public search tags or keywords to this video upload.
           </p>
         </div>
       ) : (
-        <div className="space-y-6 flex-1 flex flex-col">
-          {/* Action Header & Search */}
-          <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center justify-between pb-5 border-b border-white/10 flex-shrink-0">
+        <div className="flex flex-col gap-4 flex-1 min-h-0">
+          {/* Controls Bar: YouTube Native Search + Copy Actions */}
+          <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between pb-4 border-b border-[var(--yt-dialog-header-border)] flex-shrink-0">
             <div className="relative flex-1">
               <Search
-                size={18}
-                className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                size={16}
+                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--yt-text-secondary)]"
               />
               <input
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search or filter tags..."
-                className="w-full h-12 bg-[#121626] border border-white/10 rounded-2xl pl-12 pr-5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500/60 transition-colors"
+                placeholder="Search tags..."
+                className="yt-native-input w-full pl-10 pr-4 text-xs h-9"
               />
             </div>
 
-            <div className="flex items-center space-x-3">
-              <Button
-                variant="secondary"
-                size="md"
-                icon={Copy}
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
                 onClick={handleCopyAllComma}
-                title="Copy all tags separated by commas"
-                className="h-12 px-5 text-sm font-semibold"
+                className="yt-native-btn h-9 text-xs px-3 font-medium"
+                title="Copy all tags comma-separated"
               >
-                Copy Comma
-              </Button>
-              <Button
-                variant="secondary"
-                size="md"
-                icon={Hash}
+                <Copy size={13} />
+                <span>Copy Comma</span>
+              </button>
+              <button
                 onClick={handleCopyAllHashtags}
-                title="Copy all tags formatted as #hashtags"
-                className="h-12 px-5 text-sm font-semibold"
+                className="yt-native-btn h-9 text-xs px-3 font-medium"
+                title="Copy all tags as #hashtags"
               >
-                Copy Hashtags
-              </Button>
-              <Button
-                variant="secondary"
-                size="md"
-                icon={List}
+                <Hash size={13} />
+                <span>Hashtags</span>
+              </button>
+              <button
                 onClick={handleCopyAllLines}
-                title="Copy each tag on a separate line"
-                className="h-12 px-5 text-sm font-semibold"
+                className="yt-native-btn h-9 text-xs px-3 font-medium"
+                title="Copy all tags line-by-line"
               >
-                Copy Lines
-              </Button>
+                <List size={13} />
+                <span>Lines</span>
+              </button>
             </div>
           </div>
 
-          {/* Spacious Tags Cloud */}
-          <div className="flex flex-wrap gap-3 max-h-[520px] overflow-y-auto pr-2 flex-1">
+          {/* YouTube Native Chip Cloud */}
+          <div className="flex flex-wrap gap-2 overflow-y-auto max-h-[440px] pr-1 flex-1 content-start">
             {filteredTags.map((tag, idx) => (
               <button
                 key={idx}
                 onClick={() => handleCopySingle(tag, idx)}
-                className="group flex items-center space-x-2.5 px-4 py-3 rounded-xl bg-[#121626] hover:bg-[#1b2138] border border-white/10 hover:border-blue-500/50 text-slate-100 hover:text-white transition-all text-sm font-medium text-left shadow-sm hover:scale-[1.01]"
-                title="Click to copy this individual tag"
+                className="group yt-native-card flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-[var(--yt-text-primary)] hover:bg-[var(--yt-dialog-card-hover)] transition-all cursor-pointer"
+                title="Click to copy tag"
               >
                 <span>{tag}</span>
                 {copiedIndex === idx ? (
-                  <Check size={14} className="text-emerald-400" />
+                  <Check size={13} className="text-emerald-500" />
                 ) : (
                   <Copy
-                    size={13}
-                    className="opacity-0 group-hover:opacity-70 text-slate-400"
+                    size={12}
+                    className="opacity-40 group-hover:opacity-100 text-[var(--yt-text-secondary)] transition-opacity"
                   />
                 )}
               </button>
@@ -145,8 +141,8 @@ export const TagsModal: React.FC<TagsModalProps> = ({
           </div>
 
           {filteredTags.length === 0 && (
-            <p className="text-center text-sm text-slate-500 py-12">
-              No tags match your search filter.
+            <p className="text-center text-xs text-[var(--yt-text-secondary)] py-8">
+              No tags match your search query.
             </p>
           )}
         </div>

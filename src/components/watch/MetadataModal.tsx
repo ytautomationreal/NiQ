@@ -2,20 +2,13 @@ import React, { useState } from 'react';
 import {
   FileCode,
   Copy,
-  Clock,
-  Eye,
-  Calendar,
   Layers,
   CheckCircle2,
-  Tv,
-  AlertCircle,
   FileText,
   DollarSign,
-  Tag,
-  Share2,
+  Check,
 } from 'lucide-react';
 import { Modal } from '../common/Modal';
-import { Button } from '../common/Button';
 import { WatchVideoDetails } from '../../types/niq';
 
 interface MetadataModalProps {
@@ -32,6 +25,7 @@ export const MetadataModal: React.FC<MetadataModalProps> = ({
   onNotify,
 }) => {
   const [activeTab, setActiveTab] = useState<'overview' | 'monetization' | 'description' | 'json'>('overview');
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
   if (!details) return null;
 
@@ -45,9 +39,13 @@ export const MetadataModal: React.FC<MetadataModalProps> = ({
     return `${mins}m ${secs}s`;
   };
 
-  const copyToClipboard = async (text: string, label: string) => {
+  const copyToClipboard = async (text: string, label: string, key?: string) => {
     try {
       await navigator.clipboard.writeText(text);
+      if (key) {
+        setCopiedKey(key);
+        setTimeout(() => setCopiedKey(null), 1200);
+      }
       onNotify(`${label} copied to clipboard`);
     } catch (err) {
       console.error('Clipboard copy failed:', err);
@@ -64,15 +62,16 @@ export const MetadataModal: React.FC<MetadataModalProps> = ({
       subtitle={details.title}
       icon={FileCode}
       badge={details.category || 'Metadata'}
+      maxWidth="max-w-[1040px]"
     >
-      <div className="space-y-6 flex-1 flex flex-col">
-        {/* Navigation Tabs - Standard 48px Tab Bar */}
-        <div className="flex items-center space-x-3 border-b border-white/10 pb-4 flex-shrink-0">
+      <div className="flex flex-col gap-5 flex-1 min-h-0">
+        {/* Navigation: YouTube Native Underline Tabs */}
+        <div className="flex items-center gap-2 border-b border-[var(--yt-dialog-header-border)] flex-shrink-0">
           {(
             [
               { id: 'overview', label: 'Overview Metrics', icon: Layers },
               { id: 'monetization', label: 'Monetization & Assets', icon: DollarSign },
-              { id: 'description', label: 'Full Description', icon: FileText },
+              { id: 'description', label: 'Description', icon: FileText },
               { id: 'json', label: 'Raw JSON Payload', icon: FileCode },
             ] as const
           ).map((tab) => {
@@ -82,117 +81,136 @@ export const MetadataModal: React.FC<MetadataModalProps> = ({
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center space-x-2.5 px-5 py-2.5 rounded-xl text-sm font-semibold tracking-wide transition-all ${
-                  isActive
-                    ? 'bg-blue-600/30 text-blue-400 border border-blue-500/50 shadow-sm'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-white/5 border border-transparent'
+                className={`yt-native-tab ${
+                  isActive ? 'yt-native-tab-active' : 'yt-native-tab-inactive'
                 }`}
               >
-                <TabIcon size={17} />
+                <TabIcon size={16} />
                 <span>{tab.label}</span>
               </button>
             );
           })}
         </div>
 
-        {/* Tab 1: Overview */}
+        {/* Tab 1: Overview Metrics (Fits cleanly in container) */}
         {activeTab === 'overview' && (
-          <div className="space-y-6 flex-1">
+          <div className="flex flex-col gap-4 flex-1 min-h-0">
             {/* Top 4 Stat Highlight Cards */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="p-6 rounded-2xl bg-[#121626] border border-white/10 shadow-sm">
-                <div className="text-xs font-bold uppercase tracking-wider text-slate-400">Total Views</div>
-                <div className="text-3xl font-extrabold font-mono text-white mt-2">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 flex-shrink-0">
+              <div className="p-4 yt-native-card">
+                <div className="text-xs font-medium text-[var(--yt-text-secondary)]">Total Views</div>
+                <div className="text-2xl font-bold font-mono text-[var(--yt-text-primary)] mt-1">
                   {details.views ? details.views.toLocaleString() : '0'}
                 </div>
               </div>
-              <div className="p-6 rounded-2xl bg-[#121626] border border-white/10 shadow-sm">
-                <div className="text-xs font-bold uppercase tracking-wider text-slate-400">Duration</div>
-                <div className="text-3xl font-extrabold font-mono text-white mt-2">
+
+              <div className="p-4 yt-native-card">
+                <div className="text-xs font-medium text-[var(--yt-text-secondary)]">Duration</div>
+                <div className="text-2xl font-bold font-mono text-[var(--yt-text-primary)] mt-1">
                   {formatSeconds(details.lengthSeconds)}
                 </div>
               </div>
-              <div className="p-6 rounded-2xl bg-[#121626] border border-white/10 shadow-sm">
-                <div className="text-xs font-bold uppercase tracking-wider text-slate-400">Tags Count</div>
-                <div className="text-3xl font-extrabold font-mono text-white mt-2">
+
+              <div className="p-4 yt-native-card">
+                <div className="text-xs font-medium text-[var(--yt-text-secondary)]">Tags Count</div>
+                <div className="text-2xl font-bold font-mono text-[var(--yt-text-primary)] mt-1">
                   {details.tags.length}
                 </div>
               </div>
-              <div className="p-6 rounded-2xl bg-[#121626] border border-white/10 shadow-sm">
-                <div className="text-xs font-bold uppercase tracking-wider text-slate-400">Captions</div>
-                <div className="text-3xl font-extrabold text-emerald-400 mt-2 flex items-center gap-2">
-                  <CheckCircle2 size={26} />
-                  <span>{details.captionsList.length || (details.captionsAvailable ? 'Available' : 'None')}</span>
+
+              <div className="p-4 yt-native-card">
+                <div className="text-xs font-medium text-[var(--yt-text-secondary)]">Captions</div>
+                <div className="text-2xl font-bold text-emerald-500 mt-1 flex items-center gap-2">
+                  <CheckCircle2 size={22} />
+                  <span className="text-lg">
+                    {details.captionsList.length || (details.captionsAvailable ? 'Available' : 'None')}
+                  </span>
                 </div>
               </div>
             </div>
 
-            {/* Detailed Properties & Distribution Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="p-7 rounded-2xl bg-[#121626] border border-white/10 space-y-4 shadow-sm">
-                <div className="text-sm font-bold uppercase tracking-wider text-slate-300 border-b border-white/10 pb-3">
+            {/* Detailed Properties & Distribution 2-Column Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1">
+              <div className="p-4 yt-native-card flex flex-col justify-between">
+                <div className="text-xs font-semibold text-[var(--yt-text-primary)] pb-2 border-b border-[var(--yt-dialog-header-border)] uppercase tracking-wider">
                   Identity & Properties
                 </div>
-                <div className="space-y-3 text-sm">
-                  <div className="flex justify-between items-center py-2 border-b border-white/5">
-                    <span className="text-slate-400 font-medium">Video ID</span>
+                <div className="space-y-2 text-xs py-1">
+                  <div className="flex justify-between items-center py-1 border-b border-[var(--yt-dialog-header-border)]">
+                    <span className="text-[var(--yt-text-secondary)]">Video ID</span>
                     <button
-                      onClick={() => copyToClipboard(details.videoId, 'Video ID')}
-                      className="font-mono text-base font-semibold text-blue-400 hover:underline flex items-center gap-2"
+                      onClick={() => copyToClipboard(details.videoId, 'Video ID', 'vid')}
+                      className="font-mono font-medium text-[var(--yt-link-color)] hover:underline flex items-center gap-1.5"
                     >
                       <span>{details.videoId}</span>
-                      <Copy size={15} />
+                      {copiedKey === 'vid' ? (
+                        <Check size={12} className="text-emerald-500" />
+                      ) : (
+                        <Copy size={12} />
+                      )}
                     </button>
                   </div>
-                  <div className="flex justify-between items-center py-2 border-b border-white/5">
-                    <span className="text-slate-400 font-medium">Category</span>
-                    <span className="text-base font-semibold text-slate-200">
-                      {details.category || 'Standard Entertainment'}
+
+                  <div className="flex justify-between items-center py-1 border-b border-[var(--yt-dialog-header-border)]">
+                    <span className="text-[var(--yt-text-secondary)]">Category</span>
+                    <span className="font-medium text-[var(--yt-text-primary)]">
+                      {details.category || 'General Entertainment'}
                     </span>
                   </div>
-                  <div className="flex justify-between items-center py-2 border-b border-white/5">
-                    <span className="text-slate-400 font-medium">Exact Upload Date</span>
-                    <span className="font-mono text-base font-semibold text-slate-200">
+
+                  <div className="flex justify-between items-center py-1 border-b border-[var(--yt-dialog-header-border)]">
+                    <span className="text-[var(--yt-text-secondary)]">Exact Upload Date</span>
+                    <span className="font-mono text-[var(--yt-text-primary)]">
                       {details.publishDate || 'Not specified'}
                     </span>
                   </div>
-                  <div className="flex justify-between items-center py-2">
-                    <span className="text-slate-400 font-medium">Stream Status</span>
-                    <span className="text-base font-semibold text-slate-200">
-                      {details.isLive ? 'Live Broadcast' : 'Standard Video On Demand (VOD)'}
+
+                  <div className="flex justify-between items-center py-1">
+                    <span className="text-[var(--yt-text-secondary)]">Stream Type</span>
+                    <span className="font-medium text-[var(--yt-text-primary)]">
+                      {details.isLive ? 'Live Broadcast' : 'Standard Video (VOD)'}
                     </span>
                   </div>
                 </div>
               </div>
 
-              <div className="p-7 rounded-2xl bg-[#121626] border border-white/10 space-y-4 shadow-sm">
-                <div className="text-sm font-bold uppercase tracking-wider text-slate-300 border-b border-white/10 pb-3">
+              <div className="p-4 yt-native-card flex flex-col justify-between">
+                <div className="text-xs font-semibold text-[var(--yt-text-primary)] pb-2 border-b border-[var(--yt-dialog-header-border)] uppercase tracking-wider">
                   Creator & Distribution
                 </div>
-                <div className="space-y-3 text-sm">
-                  <div className="flex justify-between items-center py-2 border-b border-white/5">
-                    <span className="text-slate-400 font-medium">Channel Name</span>
-                    <span className="text-base font-bold text-slate-100">{details.channelTitle}</span>
+                <div className="space-y-2 text-xs py-1">
+                  <div className="flex justify-between items-center py-1 border-b border-[var(--yt-dialog-header-border)]">
+                    <span className="text-[var(--yt-text-secondary)]">Channel Name</span>
+                    <span className="font-medium text-[var(--yt-text-primary)] truncate max-w-[200px]">
+                      {details.channelTitle}
+                    </span>
                   </div>
-                  <div className="flex justify-between items-center py-2 border-b border-white/5">
-                    <span className="text-slate-400 font-medium">Channel ID</span>
+
+                  <div className="flex justify-between items-center py-1 border-b border-[var(--yt-dialog-header-border)]">
+                    <span className="text-[var(--yt-text-secondary)]">Channel ID</span>
                     <button
-                      onClick={() => copyToClipboard(details.channelId, 'Channel ID')}
-                      className="font-mono text-base font-semibold text-blue-400 hover:underline flex items-center gap-2"
+                      onClick={() => copyToClipboard(details.channelId, 'Channel ID', 'chid')}
+                      className="font-mono font-medium text-[var(--yt-link-color)] hover:underline flex items-center gap-1.5 truncate max-w-[200px]"
                     >
-                      <span>{details.channelId}</span>
-                      <Copy size={15} />
+                      <span className="truncate">{details.channelId}</span>
+                      {copiedKey === 'chid' ? (
+                        <Check size={12} className="text-emerald-500 flex-shrink-0" />
+                      ) : (
+                        <Copy size={12} className="flex-shrink-0" />
+                      )}
                     </button>
                   </div>
-                  <div className="flex justify-between items-center py-2 border-b border-white/5">
-                    <span className="text-slate-400 font-medium">Raw View Count</span>
-                    <span className="font-mono text-base font-bold text-slate-100">
+
+                  <div className="flex justify-between items-center py-1 border-b border-[var(--yt-dialog-header-border)]">
+                    <span className="text-[var(--yt-text-secondary)]">Raw View Count</span>
+                    <span className="font-mono font-medium text-[var(--yt-text-primary)]">
                       {details.views.toLocaleString()}
                     </span>
                   </div>
-                  <div className="flex justify-between items-center py-2">
-                    <span className="text-slate-400 font-medium">Length in Seconds</span>
-                    <span className="font-mono text-base font-semibold text-slate-200">
+
+                  <div className="flex justify-between items-center py-1">
+                    <span className="text-[var(--yt-text-secondary)]">Duration Seconds</span>
+                    <span className="font-mono text-[var(--yt-text-primary)]">
                       {details.lengthSeconds}s
                     </span>
                   </div>
@@ -204,32 +222,32 @@ export const MetadataModal: React.FC<MetadataModalProps> = ({
 
         {/* Tab 2: Assets & Monetization */}
         {activeTab === 'monetization' && (
-          <div className="space-y-5 flex-1 flex flex-col">
-            <div className="p-6 rounded-2xl bg-[#121626] border border-white/10 space-y-3">
-              <div className="text-sm font-bold uppercase tracking-wider text-slate-300">
+          <div className="flex flex-col gap-4 flex-1 min-h-0 overflow-y-auto pr-1">
+            <div className="p-4 yt-native-card space-y-2.5">
+              <div className="text-xs font-semibold text-[var(--yt-text-primary)] uppercase tracking-wider">
                 Monetization & Ad Insertion Offsets
               </div>
               {adBreakCount > 0 ? (
                 <div>
-                  <p className="text-sm text-slate-300 mb-3">
-                    Found <span className="font-bold text-emerald-400">{adBreakCount}</span> ad insertion offset markers in YouTube player response.
+                  <p className="text-xs text-[var(--yt-text-secondary)] mb-2">
+                    Found <span className="font-bold text-emerald-500">{adBreakCount}</span> ad insertion offset markers in YouTube player response.
                   </p>
-                  <div className="max-h-64 overflow-y-auto bg-black/60 p-5 rounded-xl font-mono text-xs text-slate-200 border border-white/10 leading-relaxed">
+                  <pre className="max-h-52 overflow-y-auto p-3 rounded-lg font-mono text-xs bg-[var(--yt-code-bg)] text-[var(--yt-text-primary)] border border-[var(--yt-dialog-header-border)] leading-relaxed">
                     {JSON.stringify(details.adPlacements, null, 2)}
-                  </div>
+                  </pre>
                 </div>
               ) : (
-                <p className="text-sm text-slate-400 py-3">
+                <p className="text-xs text-[var(--yt-text-secondary)] py-2">
                   No ad markers explicitly reported in this player response instance.
                 </p>
               )}
             </div>
 
-            <div className="p-6 rounded-2xl bg-[#121626] border border-white/10 space-y-3">
-              <div className="text-sm font-bold uppercase tracking-wider text-slate-300">
+            <div className="p-4 yt-native-card space-y-2">
+              <div className="text-xs font-semibold text-[var(--yt-text-primary)] uppercase tracking-wider">
                 Storyboard Spec Sheet Asset
               </div>
-              <p className="text-xs text-slate-300 break-all font-mono bg-black/60 p-4 rounded-xl border border-white/10 leading-normal">
+              <p className="text-xs text-[var(--yt-text-secondary)] break-all font-mono p-3 rounded-lg bg-[var(--yt-code-bg)] border border-[var(--yt-dialog-header-border)] leading-relaxed">
                 {details.storyboards || 'No storyboard spec returned.'}
               </p>
             </div>
@@ -238,45 +256,43 @@ export const MetadataModal: React.FC<MetadataModalProps> = ({
 
         {/* Tab 3: Description */}
         {activeTab === 'description' && (
-          <div className="space-y-4 flex-1 flex flex-col">
-            <div className="flex justify-between items-center">
-              <span className="text-sm font-semibold text-slate-300">
-                Total Length: <span className="font-mono text-white">{details.description.length}</span> characters
+          <div className="flex flex-col gap-3 flex-1 min-h-0">
+            <div className="flex justify-between items-center flex-shrink-0">
+              <span className="text-xs text-[var(--yt-text-secondary)]">
+                Length: <span className="font-mono text-[var(--yt-text-primary)] font-semibold">{details.description.length}</span> characters
               </span>
-              <Button
-                variant="secondary"
-                size="md"
-                icon={Copy}
+              <button
                 onClick={() => copyToClipboard(details.description, 'Full Description')}
+                className="yt-native-btn h-8 text-xs px-3 font-medium"
               >
-                Copy Full Description
-              </Button>
+                <Copy size={13} />
+                <span>Copy Description</span>
+              </button>
             </div>
             <textarea
               readOnly
               value={details.description}
-              className="flex-1 w-full min-h-[440px] bg-[#0e111d] border border-white/10 rounded-2xl p-6 text-sm font-sans text-slate-100 focus:outline-none resize-none leading-relaxed shadow-inner"
+              className="flex-1 w-full p-4 rounded-lg bg-[var(--yt-code-bg)] border border-[var(--yt-dialog-header-border)] text-xs font-sans text-[var(--yt-text-primary)] focus:outline-none resize-none leading-relaxed"
             />
           </div>
         )}
 
         {/* Tab 4: Raw JSON */}
         {activeTab === 'json' && (
-          <div className="space-y-4 flex-1 flex flex-col">
-            <div className="flex justify-between items-center">
-              <span className="text-sm font-semibold text-slate-300">Complete Raw JSON Payload</span>
-              <Button
-                variant="secondary"
-                size="md"
-                icon={Copy}
+          <div className="flex flex-col gap-3 flex-1 min-h-0">
+            <div className="flex justify-between items-center flex-shrink-0">
+              <span className="text-xs text-[var(--yt-text-secondary)]">Raw Metadata Payload</span>
+              <button
                 onClick={() =>
                   copyToClipboard(JSON.stringify(details, null, 2), 'Raw Metadata JSON')
                 }
+                className="yt-native-btn h-8 text-xs px-3 font-medium"
               >
-                Copy Complete JSON
-              </Button>
+                <Copy size={13} />
+                <span>Copy JSON</span>
+              </button>
             </div>
-            <pre className="flex-1 max-h-[460px] overflow-y-auto bg-[#07090f] border border-white/10 rounded-2xl p-6 text-xs font-mono text-cyan-300 leading-relaxed shadow-inner">
+            <pre className="flex-1 overflow-y-auto p-4 rounded-lg bg-[var(--yt-code-bg)] border border-[var(--yt-dialog-header-border)] text-xs font-mono text-[var(--yt-text-primary)] leading-relaxed">
               {JSON.stringify(details, null, 2)}
             </pre>
           </div>

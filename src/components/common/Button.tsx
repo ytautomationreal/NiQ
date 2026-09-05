@@ -18,28 +18,24 @@ export const Button: React.FC<ButtonProps> = ({
   ...props
 }) => {
   const sizeStyles = {
-    sm: 'text-xs px-2.5 py-1 gap-1.5',
-    md: 'text-xs px-3.5 py-1.5 gap-2',
-    lg: 'text-sm px-4 py-2 gap-2.5',
+    sm: 'text-xs h-8 px-3 gap-1.5',
+    md: 'text-xs h-9 px-4 gap-2',
+    lg: 'text-sm h-10 px-5 gap-2.5',
   };
 
   const variantStyles: Record<ButtonVariant, string> = {
-    primary:
-      'bg-blue-600 hover:bg-blue-500 text-white border-blue-500/50 shadow-glow focus:ring-blue-500/40',
-    secondary:
-      'bg-white/5 hover:bg-white/10 text-slate-200 border-white/10 hover:border-blue-500/30 hover:text-white',
-    ghost:
-      'bg-transparent hover:bg-white/5 text-slate-400 hover:text-slate-200 border-transparent',
-    danger:
-      'bg-rose-600/20 hover:bg-rose-600/30 text-rose-300 border-rose-500/30 hover:border-rose-500/50',
+    primary: 'yt-native-btn-primary',
+    secondary: 'yt-native-btn',
+    ghost: 'bg-transparent text-[var(--yt-text-secondary)] hover:text-[var(--yt-text-primary)] hover:bg-[var(--yt-pill-hover)] rounded-full',
+    danger: 'bg-rose-600/20 hover:bg-rose-600/30 text-rose-300 rounded-full',
   };
 
   return (
     <button
-      className={`inline-flex items-center justify-center font-medium rounded-md border transition-all duration-150 focus:outline-none focus:ring-2 disabled:opacity-50 disabled:cursor-not-allowed select-none ${sizeStyles[size]} ${variantStyles[variant]} ${className}`}
+      className={`inline-flex items-center justify-center font-medium transition-all duration-150 select-none ${sizeStyles[size]} ${variantStyles[variant]} ${className}`}
       {...props}
     >
-      {Icon && <Icon size={size === 'sm' ? 12 : 14} strokeWidth={2} />}
+      {Icon && <Icon size={size === 'sm' ? 13 : 15} strokeWidth={2} />}
       <span>{children}</span>
     </button>
   );

@@ -1,5 +1,6 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
+import { themeStore } from '../../utils/themeStore';
 
 interface ModalProps {
   isOpen: boolean;
@@ -8,6 +9,7 @@ interface ModalProps {
   subtitle?: string;
   icon?: React.ElementType;
   badge?: string;
+  maxWidth?: string;
   children: React.ReactNode;
 }
 
@@ -18,8 +20,17 @@ export const Modal: React.FC<ModalProps> = ({
   subtitle,
   icon: Icon,
   badge,
+  maxWidth = 'max-w-[1140px]',
   children,
 }) => {
+  const [isDark, setIsDark] = useState(themeStore.getIsDark());
+
+  useEffect(() => {
+    return themeStore.subscribe((dark) => {
+      setIsDark(dark);
+    });
+  }, []);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) {
@@ -33,39 +44,42 @@ export const Modal: React.FC<ModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[2147483647] flex items-center justify-center p-4 sm:p-8 select-text overflow-hidden">
-      {/* Heavy Obsidian Backdrop that completely covers entire YouTube page */}
+    <div
+      data-theme={isDark ? 'dark' : 'light'}
+      className="fixed inset-0 z-[2147483647] flex items-center justify-center p-3 sm:p-6 select-text overflow-hidden"
+    >
+      {/* YouTube Native Backdrop */}
       <div
-        className="fixed inset-0 bg-black/85 backdrop-blur-lg transition-opacity duration-200"
+        className="fixed inset-0 bg-black/65 backdrop-blur-[2px] transition-opacity duration-150"
         onClick={onClose}
       />
 
-      {/* Standard Executive Desktop Dialog (Consistent size across all features) */}
+      {/* YouTube Native Standard Dialog Container */}
       <div
-        className="relative w-[86vw] max-w-[1440px] min-w-[780px] min-h-[660px] max-h-[90vh] bg-[#0c0f18] border border-white/15 rounded-3xl shadow-[0_35px_100px_rgba(0,0,0,0.95)] overflow-hidden flex flex-col z-10 animate-fade-in"
+        className={`relative w-[92vw] ${maxWidth} max-h-[88vh] yt-native-dialog overflow-hidden flex flex-col z-10 animate-fade-in`}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header - Spacious 76px Header */}
-        <div className="flex items-center justify-between px-8 py-5 border-b border-white/10 bg-gradient-to-r from-[#151928] via-[#101320] to-[#0c0f18] flex-shrink-0">
-          <div className="flex items-center space-x-4">
+        {/* YouTube Native Dialog Header */}
+        <div className="flex items-center justify-between px-6 py-3.5 border-b border-[var(--yt-dialog-header-border)] flex-shrink-0">
+          <div className="flex items-center space-x-3 overflow-hidden">
             {Icon && (
-              <div className="h-12 w-12 rounded-2xl bg-blue-600/20 text-blue-400 border border-blue-500/35 flex items-center justify-center shadow-md flex-shrink-0">
-                <Icon size={24} strokeWidth={2.2} />
+              <div className="text-[var(--yt-text-primary)] flex-shrink-0">
+                <Icon size={20} strokeWidth={2} />
               </div>
             )}
-            <div>
-              <div className="flex items-center space-x-3">
-                <h2 className="text-2xl font-bold text-white tracking-tight leading-none">
+            <div className="min-w-0">
+              <div className="flex items-center space-x-2.5">
+                <h2 className="text-base font-semibold text-[var(--yt-text-primary)] tracking-tight leading-none truncate">
                   {title}
                 </h2>
                 {badge && (
-                  <span className="text-xs uppercase font-mono px-3 py-1 rounded-lg bg-blue-500/15 text-blue-300 border border-blue-500/30 font-bold tracking-wider">
+                  <span className="yt-native-badge flex-shrink-0">
                     {badge}
                   </span>
                 )}
               </div>
               {subtitle && (
-                <p className="text-sm text-slate-300 mt-1.5 max-w-4xl truncate font-normal leading-tight">
+                <p className="text-xs text-[var(--yt-text-secondary)] mt-1 truncate font-normal leading-tight">
                   {subtitle}
                 </p>
               )}
@@ -74,15 +88,18 @@ export const Modal: React.FC<ModalProps> = ({
 
           <button
             onClick={onClose}
-            className="p-3 rounded-2xl text-slate-400 hover:text-white hover:bg-white/10 transition-colors border border-transparent hover:border-white/10"
-            aria-label="Close modal dialog"
+            className="yt-native-icon-btn"
+            aria-label="Close dialog"
+            title="Close (Esc)"
           >
-            <X size={22} strokeWidth={2.2} />
+            <X size={20} strokeWidth={2} />
           </button>
         </div>
 
-        {/* Content Body - Consistent 32px padding */}
-        <div className="p-8 overflow-y-auto flex-1 flex flex-col">{children}</div>
+        {/* Dialog Content Area - Clean Padding, Fits without double scrollers */}
+        <div className="p-6 flex-1 flex flex-col min-h-0 overflow-hidden">
+          {children}
+        </div>
       </div>
     </div>
   );

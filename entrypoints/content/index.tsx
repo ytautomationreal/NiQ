@@ -6,6 +6,7 @@ import { NiqBridgeMessage, NiqSettings, WatchVideoDetails } from '../../src/type
 import { QuickActionBar } from '../../src/components/watch/QuickActionBar';
 import { GlobalOverlay } from '../../src/components/overlay/GlobalOverlay';
 import { modalStore } from '../../src/utils/modalStore';
+import { themeStore } from '../../src/utils/themeStore';
 import styleText from './style.css?inline';
 
 export default defineContentScript({
@@ -21,12 +22,27 @@ export default defineContentScript({
 
     // Overlay Root on document.body (Top stacking context for modals/toasts)
     let overlayHost: HTMLElement | null = null;
+    let overlayMountPoint: HTMLElement | null = null;
     let overlayReactRoot: ReactDOM.Root | null = null;
 
     // Toolbar Root inside YouTube #top-row
     let toolbarHost: HTMLElement | null = null;
+    let toolbarMountPoint: HTMLElement | null = null;
     let toolbarReactRoot: ReactDOM.Root | null = null;
     let mountObserver: MutationObserver | null = null;
+
+    // Synchronize theme across all Shadow roots
+    function syncTheme(isDark: boolean) {
+      const theme = isDark ? 'dark' : 'light';
+      if (overlayHost) overlayHost.setAttribute('data-theme', theme);
+      if (overlayMountPoint) overlayMountPoint.setAttribute('data-theme', theme);
+      if (toolbarHost) toolbarHost.setAttribute('data-theme', theme);
+      if (toolbarMountPoint) toolbarMountPoint.setAttribute('data-theme', theme);
+    }
+
+    themeStore.subscribe((isDark) => {
+      syncTheme(isDark);
+    });
 
     // 1. Inject Main-World bridge script
     function injectMainWorldScript() {
@@ -79,20 +95,24 @@ export default defineContentScript({
       overlayHost.style.zIndex = '2147483647';
       overlayHost.style.pointerEvents = 'none';
 
+      const currentTheme = themeStore.getTheme();
+      overlayHost.setAttribute('data-theme', currentTheme);
+
       const shadow = overlayHost.attachShadow({ mode: 'open' });
 
       const styleElement = document.createElement('style');
       styleElement.textContent = styleText;
       shadow.appendChild(styleElement);
 
-      const mountPoint = document.createElement('div');
-      mountPoint.className = 'niq-overlay-container';
-      mountPoint.style.pointerEvents = 'auto';
-      shadow.appendChild(mountPoint);
+      overlayMountPoint = document.createElement('div');
+      overlayMountPoint.className = 'niq-overlay-container';
+      overlayMountPoint.style.pointerEvents = 'auto';
+      overlayMountPoint.setAttribute('data-theme', currentTheme);
+      shadow.appendChild(overlayMountPoint);
 
       document.body.appendChild(overlayHost);
 
-      overlayReactRoot = ReactDOM.createRoot(mountPoint);
+      overlayReactRoot = ReactDOM.createRoot(overlayMountPoint);
       overlayReactRoot.render(<GlobalOverlay />);
     }
 
@@ -165,17 +185,21 @@ export default defineContentScript({
         toolbarHost.style.alignItems = 'center';
         toolbarHost.style.margin = '0 6px';
 
+        const currentTheme = themeStore.getTheme();
+        toolbarHost.setAttribute('data-theme', currentTheme);
+
         const shadow = toolbarHost.attachShadow({ mode: 'open' });
 
         const styleElement = document.createElement('style');
         styleElement.textContent = styleText;
         shadow.appendChild(styleElement);
 
-        const mountPoint = document.createElement('div');
-        mountPoint.className = 'niq-container';
-        shadow.appendChild(mountPoint);
+        toolbarMountPoint = document.createElement('div');
+        toolbarMountPoint.className = 'niq-container';
+        toolbarMountPoint.setAttribute('data-theme', currentTheme);
+        shadow.appendChild(toolbarMountPoint);
 
-        toolbarReactRoot = ReactDOM.createRoot(mountPoint);
+        toolbarReactRoot = ReactDOM.createRoot(toolbarMountPoint);
         toolbarReactRoot.render(<NiqToolbarWrapper />);
       }
 

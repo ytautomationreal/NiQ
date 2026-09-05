@@ -16,16 +16,16 @@ export const Badge: React.FC<BadgeProps> = ({
   className = '',
 }) => {
   const variantStyles: Record<BadgeVariant, string> = {
-    outlier: 'bg-rose-500/15 text-rose-400 border-rose-500/30',
-    info: 'bg-blue-500/15 text-blue-400 border-blue-500/30',
-    success: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
-    neutral: 'bg-white/5 text-slate-300 border-white/10',
-    accent: 'bg-cyan-500/15 text-cyan-400 border-cyan-500/30',
+    outlier: 'bg-rose-500/15 text-rose-400 border border-rose-500/30',
+    info: 'bg-[var(--yt-badge-bg)] text-[var(--yt-link-color)] border border-[var(--yt-link-color)]/30',
+    success: 'bg-emerald-500/15 text-emerald-500 border border-emerald-500/30',
+    neutral: 'yt-native-badge',
+    accent: 'bg-[var(--yt-pill-bg)] text-[var(--yt-text-primary)] border border-[var(--yt-dialog-header-border)]',
   };
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-semibold border tracking-wide uppercase font-mono ${variantStyles[variant]} ${className}`}
+      className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-semibold tracking-wide uppercase font-mono ${variantStyles[variant]} ${className}`}
     >
       {Icon && <Icon size={12} strokeWidth={2.5} />}
       {children}
