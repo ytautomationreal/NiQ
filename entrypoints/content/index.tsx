@@ -7,6 +7,7 @@ import { QuickActionBar } from '../../src/components/watch/QuickActionBar';
 import { ChannelActionBar } from '../../src/components/channel/ChannelActionBar';
 import { FeedActionBar } from '../../src/components/feed/FeedActionBar';
 import { SearchKeywordsBar } from '../../src/components/search/SearchKeywordsBar';
+import { ListingActionBar } from '../../src/components/listing/ListingActionBar';
 import { GlobalOverlay } from '../../src/components/overlay/GlobalOverlay';
 import { modalStore } from '../../src/utils/modalStore';
 import { channelStore } from '../../src/utils/channelStore';
@@ -425,6 +426,68 @@ export default defineContentScript({
       return false;
     }
 
+    // Listing Bar Mounting
+    let listingBarHost: HTMLElement | null = null;
+    let listingBarMountPoint: HTMLElement | null = null;
+    let listingBarReactRoot: ReactDOM.Root | null = null;
+
+    function isListingPage(): boolean {
+      const p = window.location.pathname;
+      return (
+        p.includes('/playlist') ||
+        p.includes('/history') ||
+        p.includes('/subscriptions') ||
+        p.includes('/channels')
+      );
+    }
+
+    function attachListingBarToDOM(): boolean {
+      if (!isListingPage()) {
+        if (listingBarHost && listingBarHost.parentNode) {
+          listingBarHost.remove();
+        }
+        return false;
+      }
+
+      initGlobalOverlay();
+
+      if (!listingBarHost) {
+        listingBarHost = document.createElement('div');
+        listingBarHost.id = 'niq-listing-bar-root';
+        listingBarHost.style.display = 'block';
+        listingBarHost.style.margin = '4px 16px';
+
+        const currentTheme = themeStore.getTheme();
+        listingBarHost.setAttribute('data-theme', currentTheme);
+
+        const shadow = listingBarHost.attachShadow({ mode: 'open' });
+        const styleElement = document.createElement('style');
+        styleElement.textContent = styleText;
+        shadow.appendChild(styleElement);
+
+        listingBarMountPoint = document.createElement('div');
+        listingBarMountPoint.className = 'niq-container';
+        listingBarMountPoint.setAttribute('data-theme', currentTheme);
+        shadow.appendChild(listingBarMountPoint);
+
+        listingBarReactRoot = ReactDOM.createRoot(listingBarMountPoint);
+        listingBarReactRoot.render(<ListingActionBar />);
+      }
+
+      const target =
+        document.querySelector('ytd-playlist-header-renderer') ||
+        document.querySelector('#page-manager ytd-browse #header') ||
+        document.querySelector('ytd-browse #header');
+
+      if (target && target.parentNode) {
+        if (listingBarHost.parentNode !== target.parentNode) {
+          target.parentNode.insertBefore(listingBarHost, target.nextSibling);
+        }
+        return true;
+      }
+      return false;
+    }
+
     // 8. Observe DOM for YouTube navigation lifecycle
     function startObservers() {
       if (mountObserver) {
@@ -442,6 +505,9 @@ export default defineContentScript({
       }
       if (isSearchPage()) {
         attachSearchBarToDOM();
+      }
+      if (isListingPage()) {
+        attachListingBarToDOM();
       }
 
       mountObserver = new MutationObserver(() => {
@@ -467,6 +533,11 @@ export default defineContentScript({
           const target = document.querySelector('ytd-search');
           if (target && (!searchBarHost || searchBarHost.parentNode !== target.parentNode)) {
             attachSearchBarToDOM();
+          }
+        } else if (isListingPage()) {
+          const target = document.querySelector('ytd-playlist-header-renderer, ytd-browse #header');
+          if (target && (!listingBarHost || listingBarHost.parentNode !== target.parentNode)) {
+            attachListingBarToDOM();
           }
         }
       });
@@ -516,6 +587,11 @@ export default defineContentScript({
         if (isSearchPage()) {
           setTimeout(attachSearchBarToDOM, 300);
           setTimeout(attachSearchBarToDOM, 900);
+        }
+
+        if (isListingPage()) {
+          setTimeout(attachListingBarToDOM, 300);
+          setTimeout(attachListingBarToDOM, 900);
         }
       });
     }

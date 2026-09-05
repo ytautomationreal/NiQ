@@ -15,6 +15,7 @@ import { ChannelIntelModal } from '../channel/ChannelIntelModal';
 import { ChannelOutliersModal } from '../channel/ChannelOutliersModal';
 import { ChannelThumbnailsModal } from '../channel/ChannelThumbnailsModal';
 import { FeedOverviewModal } from '../feed/FeedOverviewModal';
+import { ListingToolsModal } from '../listing/ListingToolsModal';
 import { channelStore } from '../../utils/channelStore';
 import { feedStore } from '../../utils/feedStore';
 import { ToastContainer } from '../common/Toast';
@@ -197,7 +198,14 @@ export const GlobalOverlay: React.FC = () => {
         onNotify={(msg, type) => modalStore.notify(msg, type)}
       />
 
-      {/* 15. Global Toast Notifications */}
+      {/* 15. Listing Page Tools Modal */}
+      <ListingToolsModal
+        isOpen={activeModal === 'listing'}
+        onClose={() => modalStore.close()}
+        onNotify={(msg, type) => modalStore.notify(msg, type)}
+      />
+
+      {/* 16. Global Toast Notifications */}
       <ToastContainer
         toasts={toasts}
         onDismiss={(id) => modalStore.dismissToast(id)}

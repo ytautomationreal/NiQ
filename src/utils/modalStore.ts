@@ -10,6 +10,7 @@ export type ModalType =
   | 'recorder'
   | 'crop'
   | 'storyboard'
+  | 'listing'
   | null;
 
 type Listener = () => void;
