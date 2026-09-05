@@ -5,10 +5,12 @@
 /* Scoped styles for NiQ Shadow DOM */
 :host {
   all: initial;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  color: #e2e8f0;
-  font-size: 13px;
-  line-height: 1.4;
+  display: inline-flex;
+  align-items: center;
+  font-family: 'Roboto', 'YouTube Noto', Roboto, Arial, sans-serif;
+  color: #f1f1f1;
+  font-size: 14px;
+  line-height: 1;
   box-sizing: border-box;
 }
 
@@ -17,44 +19,155 @@
 }
 
 .niq-container {
-  position: relative;
-  z-index: 2147483647;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
-/* Floating Action Toolbar on YouTube Watch Page */
-.niq-player-toolbar {
-  position: fixed;
-  top: 66px;
-  right: 24px;
+/* Built-in YouTube Native Action Button Group */
+.yt-native-btn-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 6px;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+/* Native YouTube Pill Button */
+.yt-native-btn {
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #f1f1f1;
+  font-size: 14px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.15s cubic-bezier(0.05, 0, 0, 1);
+  white-space: nowrap;
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+.yt-native-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.yt-native-btn:active {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* Native YouTube Split Pill Button (e.g., Like/Dislike style) */
+.yt-native-btn-split {
+  display: inline-flex;
+  align-items: center;
+  height: 36px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+  transition: background-color 0.15s ease;
+}
+
+.yt-native-btn-split:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.yt-native-btn-split-main {
+  height: 100%;
+  padding: 0 12px 0 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: transparent;
+  border: none;
+  color: #f1f1f1;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.yt-native-btn-split-main:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.yt-native-btn-split-divider {
+  width: 1px;
+  height: 20px;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.yt-native-btn-split-menu {
+  height: 100%;
+  padding: 0 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: #f1f1f1;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.yt-native-btn-split-menu:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* YouTube Native Dropdown Menu */
+.yt-native-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: 220px;
+  background: #282828;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  padding: 8px 0;
+  z-index: 2147483647;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+
+.yt-native-menu-item {
+  width: 100%;
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 5px 8px;
-  background: rgba(11, 13, 20, 0.94);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  gap: 12px;
+  padding: 10px 16px;
+  background: transparent;
+  border: none;
+  color: #f1f1f1;
+  font-size: 14px;
+  font-weight: 400;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.12s ease;
+}
+
+.yt-native-menu-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.yt-native-menu-item-sub {
+  font-size: 11px;
+  color: #aaaaaa;
+  margin-top: 2px;
+  font-family: 'Roboto', sans-serif;
+}
+
+.yt-native-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 1px 6px;
   border-radius: 10px;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.75), 0 0 15px rgba(59, 130, 246, 0.15);
-  z-index: 2147483647;
-  transition: opacity 0.2s ease, transform 0.2s ease;
-}
-
-.niq-player-toolbar:hover {
-  border-color: rgba(59, 130, 246, 0.4);
-}
-
-@keyframes niq-fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(-4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.animate-fade-in {
-  animation: niq-fade-in 0.18s ease-out forwards;
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  margin-left: 2px;
 }

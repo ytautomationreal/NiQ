@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Copy,
   Clock,
@@ -8,7 +8,6 @@ import {
   FileCode,
   Image as ImageIcon,
   ChevronDown,
-  Sparkles,
 } from 'lucide-react';
 import { WatchVideoDetails, ToastNotification } from '../../types/niq';
 import { TagsModal } from './TagsModal';
@@ -25,14 +24,15 @@ export const QuickActionBar: React.FC<QuickActionBarProps> = ({ details }) => {
   const [isTagsOpen, setIsTagsOpen] = useState(false);
   const [isMetadataOpen, setIsMetadataOpen] = useState(false);
   const [isThumbnailOpen, setIsThumbnailOpen] = useState(false);
-  const [isUrlDropdownOpen, setIsUrlDropdownOpen] = useState(false);
+  const [isCopyMenuOpen, setIsCopyMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   const addToast = (message: string, type: 'success' | 'info' | 'error' = 'success') => {
     const id = Date.now().toString();
     setToasts((prev) => [...prev, { id, message, type }]);
     setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id));
-    }, 2400);
+    }, 2200);
   };
 
   const copyToClipboard = async (text: string, label: string) => {
@@ -45,138 +45,151 @@ export const QuickActionBar: React.FC<QuickActionBarProps> = ({ details }) => {
     }
   };
 
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setIsCopyMenuOpen(false);
+      }
+    };
+    window.addEventListener('click', handleClickOutside);
+    return () => window.removeEventListener('click', handleClickOutside);
+  }, []);
+
   if (!details || !details.videoId) {
     return null;
   }
 
-  // Feature 1: Copy Clean URL
-  const handleCopyCleanUrl = () => {
-    const cleanUrl = `https://youtu.be/${details.videoId}`;
-    copyToClipboard(cleanUrl, 'Clean Video URL');
-    setIsUrlDropdownOpen(false);
+  // Feature 1: Clean URL
+  const handleCopyCleanUrl = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    copyToClipboard(`https://youtu.be/${details.videoId}`, 'Video URL');
+    setIsCopyMenuOpen(false);
   };
 
-  // Feature 1 (with Timestamp):
-  const handleCopyTimestampUrl = () => {
-    const timestampUrl = `https://youtu.be/${details.videoId}?t=${details.currentTime || 0}`;
-    copyToClipboard(timestampUrl, `URL with timestamp (${details.currentTime || 0}s)`);
-    setIsUrlDropdownOpen(false);
+  // Feature 1 (Timestamped):
+  const handleCopyTimestampUrl = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    copyToClipboard(
+      `https://youtu.be/${details.videoId}?t=${details.currentTime || 0}`,
+      `URL with timestamp (${details.currentTime || 0}s)`
+    );
+    setIsCopyMenuOpen(false);
   };
 
-  // Feature 2: Copy Title
-  const handleCopyTitle = () => {
+  // Feature 2: Clean Title
+  const handleCopyTitle = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
     copyToClipboard(details.title, 'Video Title');
+    setIsCopyMenuOpen(false);
   };
 
-  // Feature 3: Copy Metadata (Pipe-separated)
-  const handleCopyPipeMetadata = () => {
+  // Feature 3: Pipe Metadata
+  const handleCopyPipeMetadata = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
     const viewsFormatted = details.views ? details.views.toLocaleString() : '0';
     const pipeString = `${details.title} | ${viewsFormatted} views | ${details.publishDate || 'Unknown Date'} | ${details.channelTitle}`;
-    copyToClipboard(pipeString, 'Pipe-Separated Metadata');
+    copyToClipboard(pipeString, 'Video Metadata');
+    setIsCopyMenuOpen(false);
   };
 
   return (
     <>
-      {/* Floating Obsidian Action Bar */}
-      <div className="niq-player-toolbar animate-fade-in select-none">
-        {/* NiQ Brand Badge */}
-        <div className="flex items-center space-x-1.5 px-2 py-1 rounded bg-blue-600/20 border border-blue-500/30 text-blue-400">
-          <Sparkles size={13} strokeWidth={2.5} />
-          <span className="text-[11px] font-bold font-mono tracking-wider">NiQ</span>
-        </div>
-
-        {/* Action 1: Copy URL with Dropdown */}
-        <div className="relative">
-          <div className="flex items-center rounded-md bg-white/5 border border-white/10 hover:border-blue-500/30">
+      {/* Native YouTube Action Pill Row */}
+      <div className="yt-native-btn-group" role="toolbar" aria-label="NiQ Video Actions">
+        {/* 1. Native Split Pill: Copy & Options */}
+        <div className="relative inline-flex" ref={menuRef}>
+          <div className="yt-native-btn-split">
             <button
               onClick={handleCopyCleanUrl}
-              className="flex items-center space-x-1.5 px-2.5 py-1.5 text-xs text-slate-200 hover:text-white transition-colors"
-              title="Copy Clean Video URL (youtu.be)"
+              className="yt-native-btn-split-main"
+              title="Copy clean video link (youtu.be)"
             >
-              <Copy size={13} />
-              <span>Copy URL</span>
+              <Copy size={16} strokeWidth={2} />
+              <span>Copy</span>
             </button>
+            <div className="yt-native-btn-split-divider" />
             <button
-              onClick={() => setIsUrlDropdownOpen(!isUrlDropdownOpen)}
-              className="px-1.5 py-1.5 text-slate-400 hover:text-white border-l border-white/10 transition-colors"
-              title="URL Copy Options"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsCopyMenuOpen(!isCopyMenuOpen);
+              }}
+              className="yt-native-btn-split-menu"
+              title="More copy formats"
+              aria-expanded={isCopyMenuOpen}
             >
-              <ChevronDown size={12} />
+              <ChevronDown size={14} strokeWidth={2} />
             </button>
           </div>
 
-          {isUrlDropdownOpen && (
-            <div className="absolute top-full right-0 mt-1.5 w-44 bg-[#0f1118] border border-white/10 rounded-lg shadow-2xl py-1 z-50 animate-fade-in">
-              <button
-                onClick={handleCopyCleanUrl}
-                className="w-full text-left px-3 py-1.5 text-xs text-slate-300 hover:bg-white/5 hover:text-white flex items-center space-x-2"
-              >
-                <Copy size={12} />
-                <span>Clean URL</span>
+          {/* YouTube Native Dropdown Menu */}
+          {isCopyMenuOpen && (
+            <div className="yt-native-menu animate-fade-in" onClick={(e) => e.stopPropagation()}>
+              <button onClick={handleCopyCleanUrl} className="yt-native-menu-item">
+                <Copy size={16} />
+                <div>
+                  <div>Copy clean link</div>
+                  <div className="yt-native-menu-item-sub">youtu.be/{details.videoId}</div>
+                </div>
               </button>
-              <button
-                onClick={handleCopyTimestampUrl}
-                className="w-full text-left px-3 py-1.5 text-xs text-slate-300 hover:bg-white/5 hover:text-white flex items-center space-x-2"
-              >
-                <Clock size={12} />
-                <span>At Current Time</span>
+
+              <button onClick={handleCopyTimestampUrl} className="yt-native-menu-item">
+                <Clock size={16} />
+                <div>
+                  <div>Copy at current time</div>
+                  <div className="yt-native-menu-item-sub">Starts at {details.currentTime || 0}s</div>
+                </div>
+              </button>
+
+              <button onClick={handleCopyTitle} className="yt-native-menu-item">
+                <Type size={16} />
+                <div>
+                  <div>Copy video title</div>
+                  <div className="yt-native-menu-item-sub">Sanitized plain text</div>
+                </div>
+              </button>
+
+              <button onClick={handleCopyPipeMetadata} className="yt-native-menu-item">
+                <FileText size={16} />
+                <div>
+                  <div>Copy metadata</div>
+                  <div className="yt-native-menu-item-sub">Title | Views | Date | Channel</div>
+                </div>
               </button>
             </div>
           )}
         </div>
 
-        {/* Action 2: Copy Title */}
-        <button
-          onClick={handleCopyTitle}
-          className="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-md bg-white/5 hover:bg-white/10 border border-white/10 hover:border-blue-500/30 text-xs text-slate-200 hover:text-white transition-colors"
-          title="Copy Sanitized Video Title"
-        >
-          <Type size={13} />
-          <span>Title</span>
-        </button>
-
-        {/* Action 3: Copy Metadata */}
-        <button
-          onClick={handleCopyPipeMetadata}
-          className="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-md bg-white/5 hover:bg-white/10 border border-white/10 hover:border-blue-500/30 text-xs text-slate-200 hover:text-white transition-colors"
-          title="Copy Title | Views | Date | Channel"
-        >
-          <FileText size={13} />
-          <span>Metadata</span>
-        </button>
-
-        {/* Action 5: Tags Modal Trigger */}
+        {/* 2. Native Pill: Tags */}
         <button
           onClick={() => setIsTagsOpen(true)}
-          className="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-md bg-white/5 hover:bg-white/10 border border-white/10 hover:border-blue-500/30 text-xs text-slate-200 hover:text-white transition-colors"
-          title="Inspect Video Tags"
+          className="yt-native-btn"
+          title="Inspect video tags and keywords"
         >
-          <Tag size={13} />
+          <Tag size={16} strokeWidth={2} />
           <span>Tags</span>
           {details.tags.length > 0 && (
-            <span className="text-[10px] px-1 rounded bg-blue-500/20 text-blue-400 font-mono">
-              {details.tags.length}
-            </span>
+            <span className="yt-native-badge">{details.tags.length}</span>
           )}
         </button>
 
-        {/* Action 6: Metadata Inspector Trigger */}
+        {/* 3. Native Pill: Metadata Inspector */}
         <button
           onClick={() => setIsMetadataOpen(true)}
-          className="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-md bg-white/5 hover:bg-white/10 border border-white/10 hover:border-blue-500/30 text-xs text-slate-200 hover:text-white transition-colors"
-          title="Deep Video Metadata Inspector"
+          className="yt-native-btn"
+          title="Deep metadata and monetization inspector"
         >
-          <FileCode size={13} />
-          <span>Inspector</span>
+          <FileCode size={16} strokeWidth={2} />
+          <span>Metadata</span>
         </button>
 
-        {/* Action 9: Thumbnail Studio Trigger */}
+        {/* 4. Native Pill: Thumbnails */}
         <button
           onClick={() => setIsThumbnailOpen(true)}
-          className="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-md bg-white/5 hover:bg-white/10 border border-white/10 hover:border-blue-500/30 text-xs text-slate-200 hover:text-white transition-colors"
-          title="Open Thumbnail Downloader"
+          className="yt-native-btn"
+          title="Download full resolution thumbnails (4K/1080p, WebP, ZIP)"
         >
-          <ImageIcon size={13} />
+          <ImageIcon size={16} strokeWidth={2} />
           <span>Thumbnails</span>
         </button>
       </div>
@@ -205,7 +218,7 @@ export const QuickActionBar: React.FC<QuickActionBarProps> = ({ details }) => {
         onNotify={addToast}
       />
 
-      {/* Toast Notification Container */}
+      {/* Confirmation Toast Notification */}
       <ToastContainer
         toasts={toasts}
         onDismiss={(id) => setToasts((prev) => prev.filter((t) => t.id !== id))}

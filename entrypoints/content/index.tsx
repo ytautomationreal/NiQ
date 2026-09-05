@@ -12,12 +12,13 @@ export default defineContentScript({
   cssInjectionMode: 'manual',
 
   main() {
-    console.log('[NiQ Engine] Content script active.');
+    console.log('[NiQ Engine] Content script initialized.');
 
     let reactRoot: ReactDOM.Root | null = null;
+    let hostElement: HTMLElement | null = null;
     let currentSettings: NiqSettings | null = null;
     let videoDetails: WatchVideoDetails | null = null;
-    let listenersBound = false;
+    let mountObserver: MutationObserver | null = null;
 
     // 1. Inject Main-World bridge script
     function injectMainWorldScript() {
@@ -26,9 +27,8 @@ export default defineContentScript({
         script.src = chrome.runtime.getURL('injected.js');
         script.onload = () => script.remove();
         (document.head || document.documentElement).appendChild(script);
-        console.log('[NiQ Engine] Main-World bridge loaded.');
       } catch (err) {
-        console.error('[NiQ Engine] Bridge injection error:', err);
+        console.error('[NiQ Engine] Script injection error:', err);
       }
     }
 
@@ -52,11 +52,9 @@ export default defineContentScript({
             }
           `;
           (document.head || document.documentElement).appendChild(styleTag);
-          console.log('[NiQ Filter] Shorts hidden.');
         }
       } else if (styleTag) {
         styleTag.remove();
-        console.log('[NiQ Filter] Shorts restored.');
       }
     }
 
@@ -113,43 +111,96 @@ export default defineContentScript({
       return <QuickActionBar details={details} />;
     };
 
-    // 4. Initialize Shadow DOM UI Host
-    function initShadowRoot() {
-      if (document.getElementById('niq-root')) {
-        return;
+    // 4. Native In-Page Mount Management
+    function attachHostToDOM(): boolean {
+      if (!window.location.href.includes('/watch')) {
+        return false;
       }
 
-      const hostElement = document.createElement('div');
-      hostElement.id = 'niq-root';
-      hostElement.style.position = 'relative';
-      hostElement.style.zIndex = '2147483647';
+      // Create host element and Shadow DOM if not already created
+      if (!hostElement) {
+        hostElement = document.createElement('div');
+        hostElement.id = 'niq-root';
+        hostElement.style.display = 'inline-flex';
+        hostElement.style.alignItems = 'center';
+        hostElement.style.margin = '0 6px';
 
-      const shadow = hostElement.attachShadow({ mode: 'open' });
+        const shadow = hostElement.attachShadow({ mode: 'open' });
 
-      // Inject Scoped Stylesheet
-      const styleElement = document.createElement('style');
-      styleElement.textContent = styleText;
-      shadow.appendChild(styleElement);
+        const styleElement = document.createElement('style');
+        styleElement.textContent = styleText;
+        shadow.appendChild(styleElement);
 
-      const mountPoint = document.createElement('div');
-      mountPoint.className = 'niq-container';
-      shadow.appendChild(mountPoint);
+        const mountPoint = document.createElement('div');
+        mountPoint.className = 'niq-container';
+        shadow.appendChild(mountPoint);
 
-      document.body.appendChild(hostElement);
+        reactRoot = ReactDOM.createRoot(mountPoint);
+        reactRoot.render(<NiqWatchWrapper />);
+      }
 
-      // Mount React App inside Shadow DOM
-      reactRoot = ReactDOM.createRoot(mountPoint);
-      reactRoot.render(<NiqWatchWrapper />);
-      console.log('[NiQ Engine] Shadow DOM & React Root mounted.');
+      // Priority 1: In #top-row between #owner and #actions
+      const owner = document.querySelector('ytd-watch-metadata #top-row #owner');
+      const actions = document.querySelector('ytd-watch-metadata #top-row #actions');
+      const topRow = document.querySelector('ytd-watch-metadata #top-row');
+
+      if (owner && owner.parentNode) {
+        if (hostElement.parentNode !== owner.parentNode || hostElement.nextSibling !== (actions || owner.nextSibling)) {
+          if (actions) {
+            owner.parentNode.insertBefore(hostElement, actions);
+          } else {
+            owner.parentNode.insertBefore(hostElement, owner.nextSibling);
+          }
+        }
+        return true;
+      }
+
+      if (topRow) {
+        if (hostElement.parentNode !== topRow) {
+          topRow.appendChild(hostElement);
+        }
+        return true;
+      }
+
+      // Priority 2: In #above-the-fold after #title
+      const title = document.querySelector('ytd-watch-metadata #above-the-fold #title') || document.querySelector('#title.ytd-watch-metadata');
+      if (title && title.parentNode) {
+        if (hostElement.parentNode !== title.parentNode) {
+          title.parentNode.insertBefore(hostElement, title.nextSibling);
+        }
+        return true;
+      }
+
+      return false;
     }
 
-    // 5. Lifecycle Initialization
+    // 5. Watch for dynamic DOM changes on YouTube
+    function startMountObserver() {
+      if (mountObserver) {
+        mountObserver.disconnect();
+      }
+
+      // Try immediate attachment
+      attachHostToDOM();
+
+      // Observe DOM for YouTube's dynamic page navigation and re-renders
+      mountObserver = new MutationObserver(() => {
+        if (window.location.href.includes('/watch')) {
+          const owner = document.querySelector('ytd-watch-metadata #top-row #owner');
+          if (owner && (!hostElement || hostElement.parentNode !== owner.parentNode)) {
+            attachHostToDOM();
+          }
+        }
+      });
+
+      mountObserver.observe(document.body, {
+        childList: true,
+        subtree: true,
+      });
+    }
+
+    // 6. Initialization
     function setup() {
-      if (listenersBound) return;
-      listenersBound = true;
-
-      initShadowRoot();
-
       getNiqSettings().then((settings) => {
         currentSettings = settings;
         updateShortsVisibility(settings.hideShorts);
@@ -161,8 +212,12 @@ export default defineContentScript({
         updateShortsVisibility(newSettings.hideShorts);
       });
 
+      startMountObserver();
+
       window.addEventListener('yt-navigate-finish', () => {
-        initShadowRoot();
+        setTimeout(attachHostToDOM, 200);
+        setTimeout(attachHostToDOM, 600);
+        setTimeout(attachHostToDOM, 1200);
       });
     }
 
