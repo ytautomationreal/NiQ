@@ -14,12 +14,15 @@ import { AdMarkersOverlay } from '../watch/AdMarkersOverlay';
 import { ChannelIntelModal } from '../channel/ChannelIntelModal';
 import { ChannelOutliersModal } from '../channel/ChannelOutliersModal';
 import { ChannelThumbnailsModal } from '../channel/ChannelThumbnailsModal';
+import { FeedOverviewModal } from '../feed/FeedOverviewModal';
 import { channelStore } from '../../utils/channelStore';
+import { feedStore } from '../../utils/feedStore';
 import { ToastContainer } from '../common/Toast';
 
 export const GlobalOverlay: React.FC = () => {
   const [state, setState] = useState(modalStore.getState());
   const [channelState, setChannelState] = useState(channelStore.getState());
+  const [feedState, setFeedState] = useState(feedStore.getState());
 
   useEffect(() => {
     const unsubModal = modalStore.subscribe(() => {
@@ -28,9 +31,13 @@ export const GlobalOverlay: React.FC = () => {
     const unsubChannel = channelStore.subscribe(() => {
       setChannelState(channelStore.getState());
     });
+    const unsubFeed = feedStore.subscribe(() => {
+      setFeedState(feedStore.getState());
+    });
     return () => {
       unsubModal();
       unsubChannel();
+      unsubFeed();
     };
   }, []);
 
@@ -182,7 +189,15 @@ export const GlobalOverlay: React.FC = () => {
         onNotify={(msg, type) => modalStore.notify(msg, type)}
       />
 
-      {/* 14. Global Toast Notifications */}
+      {/* 14. Feed Overview Modal */}
+      <FeedOverviewModal
+        isOpen={feedState.isModalOpen}
+        onClose={() => feedStore.closeModal()}
+        videos={feedState.videos}
+        onNotify={(msg, type) => modalStore.notify(msg, type)}
+      />
+
+      {/* 15. Global Toast Notifications */}
       <ToastContainer
         toasts={toasts}
         onDismiss={(id) => modalStore.dismissToast(id)}

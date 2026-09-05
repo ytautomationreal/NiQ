@@ -5,10 +5,13 @@ import { getNiqSettings, onNiqSettingsChange } from '../../src/utils/storage';
 import { NiqBridgeMessage, NiqSettings, WatchVideoDetails } from '../../src/types/niq';
 import { QuickActionBar } from '../../src/components/watch/QuickActionBar';
 import { ChannelActionBar } from '../../src/components/channel/ChannelActionBar';
+import { FeedActionBar } from '../../src/components/feed/FeedActionBar';
+import { SearchKeywordsBar } from '../../src/components/search/SearchKeywordsBar';
 import { GlobalOverlay } from '../../src/components/overlay/GlobalOverlay';
 import { modalStore } from '../../src/utils/modalStore';
 import { channelStore } from '../../src/utils/channelStore';
 import { outlierDetector } from '../../src/utils/outlierDetector';
+import { feedScanner } from '../../src/utils/feedScanner';
 import { themeStore } from '../../src/utils/themeStore';
 import styleText from './style.css?inline';
 
@@ -311,7 +314,118 @@ export default defineContentScript({
       return false;
     }
 
-    // 7. Observe DOM for YouTube navigation lifecycle
+    // 7. Feed and Search Bar Mounting
+    let feedBarHost: HTMLElement | null = null;
+    let feedBarMountPoint: HTMLElement | null = null;
+    let feedBarReactRoot: ReactDOM.Root | null = null;
+
+    let searchBarHost: HTMLElement | null = null;
+    let searchBarMountPoint: HTMLElement | null = null;
+    let searchBarReactRoot: ReactDOM.Root | null = null;
+
+    function isHomeFeed(): boolean {
+      return window.location.pathname === '/' || window.location.pathname === '';
+    }
+
+    function isSearchPage(): boolean {
+      return window.location.pathname === '/results';
+    }
+
+    function attachFeedBarToDOM(): boolean {
+      if (!isHomeFeed()) {
+        if (feedBarHost && feedBarHost.parentNode) {
+          feedBarHost.remove();
+        }
+        return false;
+      }
+
+      initGlobalOverlay();
+
+      if (!feedBarHost) {
+        feedBarHost = document.createElement('div');
+        feedBarHost.id = 'niq-feed-bar-root';
+        feedBarHost.style.display = 'block';
+        feedBarHost.style.margin = '8px 16px';
+
+        const currentTheme = themeStore.getTheme();
+        feedBarHost.setAttribute('data-theme', currentTheme);
+
+        const shadow = feedBarHost.attachShadow({ mode: 'open' });
+        const styleElement = document.createElement('style');
+        styleElement.textContent = styleText;
+        shadow.appendChild(styleElement);
+
+        feedBarMountPoint = document.createElement('div');
+        feedBarMountPoint.className = 'niq-container';
+        feedBarMountPoint.setAttribute('data-theme', currentTheme);
+        shadow.appendChild(feedBarMountPoint);
+
+        feedBarReactRoot = ReactDOM.createRoot(feedBarMountPoint);
+        feedBarReactRoot.render(<FeedActionBar />);
+      }
+
+      const target =
+        document.querySelector('ytd-rich-grid-renderer #header') ||
+        document.querySelector('ytd-rich-grid-renderer #chips-wrapper') ||
+        document.querySelector('ytd-rich-grid-renderer');
+
+      if (target && target.parentNode) {
+        if (feedBarHost.parentNode !== target.parentNode) {
+          target.parentNode.insertBefore(feedBarHost, target);
+        }
+        return true;
+      }
+      return false;
+    }
+
+    function attachSearchBarToDOM(): boolean {
+      if (!isSearchPage()) {
+        if (searchBarHost && searchBarHost.parentNode) {
+          searchBarHost.remove();
+        }
+        return false;
+      }
+
+      initGlobalOverlay();
+
+      if (!searchBarHost) {
+        searchBarHost = document.createElement('div');
+        searchBarHost.id = 'niq-search-bar-root';
+        searchBarHost.style.display = 'block';
+        searchBarHost.style.margin = '4px 16px';
+
+        const currentTheme = themeStore.getTheme();
+        searchBarHost.setAttribute('data-theme', currentTheme);
+
+        const shadow = searchBarHost.attachShadow({ mode: 'open' });
+        const styleElement = document.createElement('style');
+        styleElement.textContent = styleText;
+        shadow.appendChild(styleElement);
+
+        searchBarMountPoint = document.createElement('div');
+        searchBarMountPoint.className = 'niq-container';
+        searchBarMountPoint.setAttribute('data-theme', currentTheme);
+        shadow.appendChild(searchBarMountPoint);
+
+        searchBarReactRoot = ReactDOM.createRoot(searchBarMountPoint);
+        searchBarReactRoot.render(<SearchKeywordsBar />);
+      }
+
+      const target =
+        document.querySelector('ytd-search #header-container') ||
+        document.querySelector('ytd-search #chips-wrapper') ||
+        document.querySelector('ytd-search');
+
+      if (target && target.parentNode) {
+        if (searchBarHost.parentNode !== target.parentNode) {
+          target.parentNode.insertBefore(searchBarHost, target.nextSibling);
+        }
+        return true;
+      }
+      return false;
+    }
+
+    // 8. Observe DOM for YouTube navigation lifecycle
     function startObservers() {
       if (mountObserver) {
         mountObserver.disconnect();
@@ -321,6 +435,13 @@ export default defineContentScript({
       if (isChannelUrl()) {
         attachChannelBarToDOM();
         outlierDetector.start();
+      }
+      if (isHomeFeed()) {
+        attachFeedBarToDOM();
+        feedScanner.start();
+      }
+      if (isSearchPage()) {
+        attachSearchBarToDOM();
       }
 
       mountObserver = new MutationObserver(() => {
@@ -337,6 +458,16 @@ export default defineContentScript({
           if (target && (!channelBarHost || channelBarHost.parentNode !== target.parentNode)) {
             attachChannelBarToDOM();
           }
+        } else if (isHomeFeed()) {
+          const target = document.querySelector('ytd-rich-grid-renderer');
+          if (target && (!feedBarHost || feedBarHost.parentNode !== target.parentNode)) {
+            attachFeedBarToDOM();
+          }
+        } else if (isSearchPage()) {
+          const target = document.querySelector('ytd-search');
+          if (target && (!searchBarHost || searchBarHost.parentNode !== target.parentNode)) {
+            attachSearchBarToDOM();
+          }
         }
       });
 
@@ -346,7 +477,7 @@ export default defineContentScript({
       });
     }
 
-    // 8. Initialize
+    // 9. Initialize
     function setup() {
       getNiqSettings().then((settings) => {
         currentSettings = settings;
@@ -372,6 +503,19 @@ export default defineContentScript({
           outlierDetector.start();
         } else {
           outlierDetector.stop();
+        }
+
+        if (isHomeFeed()) {
+          setTimeout(attachFeedBarToDOM, 300);
+          setTimeout(attachFeedBarToDOM, 900);
+          feedScanner.start();
+        } else {
+          feedScanner.stop();
+        }
+
+        if (isSearchPage()) {
+          setTimeout(attachSearchBarToDOM, 300);
+          setTimeout(attachSearchBarToDOM, 900);
         }
       });
     }
