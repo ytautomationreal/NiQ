@@ -6,6 +6,11 @@ import { MetadataModal } from '../watch/MetadataModal';
 import { ThumbnailModal } from '../watch/ThumbnailModal';
 import { TranscriptModal } from '../watch/TranscriptModal';
 import { CommentsModal } from '../watch/CommentsModal';
+import { FrameExtractorModal } from '../watch/FrameExtractorModal';
+import { SceneRecorderModal } from '../watch/SceneRecorderModal';
+import { CropRecorderModal } from '../watch/CropRecorderModal';
+import { StoryboardModal } from '../watch/StoryboardModal';
+import { AdMarkersOverlay } from '../watch/AdMarkersOverlay';
 import { ToastContainer } from '../common/Toast';
 
 export const GlobalOverlay: React.FC = () => {
@@ -76,7 +81,61 @@ export const GlobalOverlay: React.FC = () => {
         />
       )}
 
-      {/* 6. Global Toast Notifications */}
+      {/* 6. Scene Frame Extractor Modal */}
+      {videoDetails && (
+        <FrameExtractorModal
+          isOpen={activeModal === 'frames'}
+          onClose={() => modalStore.close()}
+          videoId={videoDetails.videoId}
+          videoTitle={videoDetails.title}
+          videoLength={videoDetails.lengthSeconds}
+          onNotify={(msg, type) => modalStore.notify(msg, type)}
+        />
+      )}
+
+      {/* 7. Video Scene Recorder Modal */}
+      {videoDetails && (
+        <SceneRecorderModal
+          isOpen={activeModal === 'recorder'}
+          onClose={() => modalStore.close()}
+          videoId={videoDetails.videoId}
+          videoTitle={videoDetails.title}
+          onNotify={(msg, type) => modalStore.notify(msg, type)}
+        />
+      )}
+
+      {/* 8. Crop Recorder Modal */}
+      {videoDetails && (
+        <CropRecorderModal
+          isOpen={activeModal === 'crop'}
+          onClose={() => modalStore.close()}
+          videoId={videoDetails.videoId}
+          videoTitle={videoDetails.title}
+          onNotify={(msg, type) => modalStore.notify(msg, type)}
+        />
+      )}
+
+      {/* 9. Storyboard Filmstrip Modal */}
+      {videoDetails && (
+        <StoryboardModal
+          isOpen={activeModal === 'storyboard'}
+          onClose={() => modalStore.close()}
+          videoId={videoDetails.videoId}
+          videoTitle={videoDetails.title}
+          storyboardsSpec={videoDetails.storyboards}
+          onNotify={(msg, type) => modalStore.notify(msg, type)}
+        />
+      )}
+
+      {/* 10. Ad Placement Markers on Scrubber */}
+      {videoDetails && (
+        <AdMarkersOverlay
+          adPlacements={videoDetails.adPlacements}
+          videoLength={videoDetails.lengthSeconds}
+        />
+      )}
+
+      {/* 11. Global Toast Notifications */}
       <ToastContainer
         toasts={toasts}
         onDismiss={(id) => modalStore.dismissToast(id)}

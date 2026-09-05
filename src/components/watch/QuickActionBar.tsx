@@ -5,6 +5,10 @@ import {
   Type,
   FileText,
   Tag,
+  Camera,
+  Video,
+  Crop,
+  Film,
   FileCode,
   Image as ImageIcon,
   ChevronDown,
@@ -20,7 +24,9 @@ interface QuickActionBarProps {
 
 export const QuickActionBar: React.FC<QuickActionBarProps> = ({ details }) => {
   const [isCopyMenuOpen, setIsCopyMenuOpen] = useState(false);
+  const [isCaptureMenuOpen, setIsCaptureMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const captureMenuRef = useRef<HTMLDivElement>(null);
 
   // Sync details to modalStore
   useEffect(() => {
@@ -32,6 +38,9 @@ export const QuickActionBar: React.FC<QuickActionBarProps> = ({ details }) => {
     const handleClickOutside = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         setIsCopyMenuOpen(false);
+      }
+      if (captureMenuRef.current && !captureMenuRef.current.contains(e.target as Node)) {
+        setIsCaptureMenuOpen(false);
       }
     };
     window.addEventListener('click', handleClickOutside);
@@ -186,15 +195,92 @@ export const QuickActionBar: React.FC<QuickActionBarProps> = ({ details }) => {
         <span>Comments</span>
       </button>
 
-      {/* 5. Native Pill: Metadata Inspector */}
-      <button
-        onClick={() => modalStore.open('metadata')}
-        className="yt-native-btn"
-        title="Deep metadata and monetization inspector"
-      >
-        <FileCode size={16} strokeWidth={2} />
-        <span>Metadata</span>
-      </button>
+      {/* 5. Native Split Pill: Media Capture & Recording Studio */}
+      <div className="relative inline-flex" ref={captureMenuRef}>
+        <div className="yt-native-btn-split">
+          <button
+            onClick={() => modalStore.open('frames')}
+            className="yt-native-btn-split-main"
+            title="Scene Frame Extractor (Snapshot & Sequence ZIP)"
+          >
+            <Camera size={16} strokeWidth={2} />
+            <span>Capture</span>
+          </button>
+          <div className="yt-native-btn-split-divider" />
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsCaptureMenuOpen(!isCaptureMenuOpen);
+            }}
+            className="yt-native-btn-split-menu"
+            title="Media Studio tools (Record, Crop, Storyboards)"
+            aria-expanded={isCaptureMenuOpen}
+          >
+            <ChevronDown size={14} strokeWidth={2} />
+          </button>
+        </div>
+
+        {/* Capture Dropdown Menu */}
+        {isCaptureMenuOpen && (
+          <div className="yt-native-menu animate-fade-in" onClick={(e) => e.stopPropagation()}>
+            <button
+              onClick={() => {
+                modalStore.open('frames');
+                setIsCaptureMenuOpen(false);
+              }}
+              className="yt-native-menu-item"
+            >
+              <Camera size={16} />
+              <div>
+                <div>Frame Extractor</div>
+                <div className="yt-native-menu-item-sub">Native resolution snapshot & ZIP</div>
+              </div>
+            </button>
+
+            <button
+              onClick={() => {
+                modalStore.open('recorder');
+                setIsCaptureMenuOpen(false);
+              }}
+              className="yt-native-menu-item"
+            >
+              <Video size={16} />
+              <div>
+                <div>Scene Recorder</div>
+                <div className="yt-native-menu-item-sub">Record video clip with audio</div>
+              </div>
+            </button>
+
+            <button
+              onClick={() => {
+                modalStore.open('crop');
+                setIsCaptureMenuOpen(false);
+              }}
+              className="yt-native-menu-item"
+            >
+              <Crop size={16} />
+              <div>
+                <div>Crop for Shorts / Reels</div>
+                <div className="yt-native-menu-item-sub">9:16 vertical & 1:1 square crop</div>
+              </div>
+            </button>
+
+            <button
+              onClick={() => {
+                modalStore.open('storyboard');
+                setIsCaptureMenuOpen(false);
+              }}
+              className="yt-native-menu-item"
+            >
+              <Film size={16} />
+              <div>
+                <div>Storyboard Filmstrip</div>
+                <div className="yt-native-menu-item-sub">Mosaic sheets gallery & bulk ZIP</div>
+              </div>
+            </button>
+          </div>
+        )}
+      </div>
 
       {/* 6. Native Pill: Thumbnails */}
       <button
@@ -204,6 +290,16 @@ export const QuickActionBar: React.FC<QuickActionBarProps> = ({ details }) => {
       >
         <ImageIcon size={16} strokeWidth={2} />
         <span>Thumbnails</span>
+      </button>
+
+      {/* 7. Native Pill: Metadata Inspector */}
+      <button
+        onClick={() => modalStore.open('metadata')}
+        className="yt-native-btn"
+        title="Deep metadata and monetization inspector"
+      >
+        <FileCode size={16} strokeWidth={2} />
+        <span>Metadata</span>
       </button>
     </div>
   );
