@@ -4,8 +4,11 @@ import ReactDOM from 'react-dom/client';
 import { getNiqSettings, onNiqSettingsChange } from '../../src/utils/storage';
 import { NiqBridgeMessage, NiqSettings, WatchVideoDetails } from '../../src/types/niq';
 import { QuickActionBar } from '../../src/components/watch/QuickActionBar';
+import { ChannelActionBar } from '../../src/components/channel/ChannelActionBar';
 import { GlobalOverlay } from '../../src/components/overlay/GlobalOverlay';
 import { modalStore } from '../../src/utils/modalStore';
+import { channelStore } from '../../src/utils/channelStore';
+import { outlierDetector } from '../../src/utils/outlierDetector';
 import { themeStore } from '../../src/utils/themeStore';
 import styleText from './style.css?inline';
 
@@ -29,6 +32,12 @@ export default defineContentScript({
     let toolbarHost: HTMLElement | null = null;
     let toolbarMountPoint: HTMLElement | null = null;
     let toolbarReactRoot: ReactDOM.Root | null = null;
+
+    // Channel Bar Root inside YouTube Channel Header
+    let channelBarHost: HTMLElement | null = null;
+    let channelBarMountPoint: HTMLElement | null = null;
+    let channelBarReactRoot: ReactDOM.Root | null = null;
+
     let mountObserver: MutationObserver | null = null;
 
     // Synchronize theme across all Shadow roots
@@ -38,6 +47,8 @@ export default defineContentScript({
       if (overlayMountPoint) overlayMountPoint.setAttribute('data-theme', theme);
       if (toolbarHost) toolbarHost.setAttribute('data-theme', theme);
       if (toolbarMountPoint) toolbarMountPoint.setAttribute('data-theme', theme);
+      if (channelBarHost) channelBarHost.setAttribute('data-theme', theme);
+      if (channelBarMountPoint) channelBarMountPoint.setAttribute('data-theme', theme);
     }
 
     themeStore.subscribe((isDark) => {
@@ -135,6 +146,8 @@ export default defineContentScript({
           if (msg.type === 'NIQ_PLAYER_RESPONSE') {
             setDetails(msg.payload);
             modalStore.setVideoDetails(msg.payload);
+          } else if (msg.type === 'NIQ_CHANNEL_DATA') {
+            channelStore.setChannelDetails(msg.payload);
           }
         };
 
@@ -150,6 +163,13 @@ export default defineContentScript({
               } as NiqBridgeMessage,
               '*'
             );
+          }
+
+          if (isChannelUrl()) {
+            setTimeout(attachChannelBarToDOM, 300);
+            outlierDetector.start();
+          } else {
+            outlierDetector.stop();
           }
         };
 
@@ -169,6 +189,16 @@ export default defineContentScript({
 
       return <QuickActionBar details={details} />;
     };
+
+    function isChannelUrl(): boolean {
+      const path = window.location.pathname;
+      return (
+        path.startsWith('/@') ||
+        path.startsWith('/channel/') ||
+        path.startsWith('/c/') ||
+        path.startsWith('/user/')
+      );
+    }
 
     // 5. Mount Toolbar into YouTube's #top-row near Title
     function attachToolbarToDOM(): boolean {
@@ -228,19 +258,84 @@ export default defineContentScript({
       return false;
     }
 
-    // 6. Observe DOM for YouTube navigation lifecycle
+    // 6. Mount Channel Action Bar on Channel Pages
+    function attachChannelBarToDOM(): boolean {
+      if (!isChannelUrl()) {
+        if (channelBarHost && channelBarHost.parentNode) {
+          channelBarHost.remove();
+        }
+        return false;
+      }
+
+      initGlobalOverlay();
+
+      if (!channelBarHost) {
+        channelBarHost = document.createElement('div');
+        channelBarHost.id = 'niq-channel-bar-root';
+        channelBarHost.style.display = 'inline-flex';
+        channelBarHost.style.alignItems = 'center';
+        channelBarHost.style.margin = '10px 0';
+
+        const currentTheme = themeStore.getTheme();
+        channelBarHost.setAttribute('data-theme', currentTheme);
+
+        const shadow = channelBarHost.attachShadow({ mode: 'open' });
+
+        const styleElement = document.createElement('style');
+        styleElement.textContent = styleText;
+        shadow.appendChild(styleElement);
+
+        channelBarMountPoint = document.createElement('div');
+        channelBarMountPoint.className = 'niq-container';
+        channelBarMountPoint.setAttribute('data-theme', currentTheme);
+        shadow.appendChild(channelBarMountPoint);
+
+        channelBarReactRoot = ReactDOM.createRoot(channelBarMountPoint);
+        channelBarReactRoot.render(<ChannelActionBar />);
+      }
+
+      const target =
+        document.querySelector('.page-header-view-model-wiz__page-header-headline-info') ||
+        document.querySelector('#page-header #buttons') ||
+        document.querySelector('ytd-c4-tabbed-header-renderer #buttons') ||
+        document.querySelector('#channel-header-container #inner-header-container') ||
+        document.querySelector('ytd-page-header-renderer');
+
+      if (target && target.parentNode) {
+        if (channelBarHost.parentNode !== target.parentNode) {
+          target.parentNode.insertBefore(channelBarHost, target.nextSibling);
+        }
+        return true;
+      }
+
+      return false;
+    }
+
+    // 7. Observe DOM for YouTube navigation lifecycle
     function startObservers() {
       if (mountObserver) {
         mountObserver.disconnect();
       }
 
       attachToolbarToDOM();
+      if (isChannelUrl()) {
+        attachChannelBarToDOM();
+        outlierDetector.start();
+      }
 
       mountObserver = new MutationObserver(() => {
         if (window.location.href.includes('/watch')) {
           const owner = document.querySelector('ytd-watch-metadata #top-row #owner');
           if (owner && (!toolbarHost || toolbarHost.parentNode !== owner.parentNode)) {
             attachToolbarToDOM();
+          }
+        } else if (isChannelUrl()) {
+          const target =
+            document.querySelector('.page-header-view-model-wiz__page-header-headline-info') ||
+            document.querySelector('#page-header #buttons') ||
+            document.querySelector('ytd-c4-tabbed-header-renderer #buttons');
+          if (target && (!channelBarHost || channelBarHost.parentNode !== target.parentNode)) {
+            attachChannelBarToDOM();
           }
         }
       });
@@ -251,7 +346,7 @@ export default defineContentScript({
       });
     }
 
-    // 7. Initialize
+    // 8. Initialize
     function setup() {
       getNiqSettings().then((settings) => {
         currentSettings = settings;
@@ -270,6 +365,14 @@ export default defineContentScript({
         setTimeout(attachToolbarToDOM, 250);
         setTimeout(attachToolbarToDOM, 750);
         setTimeout(attachToolbarToDOM, 1400);
+
+        if (isChannelUrl()) {
+          setTimeout(attachChannelBarToDOM, 300);
+          setTimeout(attachChannelBarToDOM, 900);
+          outlierDetector.start();
+        } else {
+          outlierDetector.stop();
+        }
       });
     }
 

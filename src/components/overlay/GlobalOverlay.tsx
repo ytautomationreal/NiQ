@@ -11,18 +11,36 @@ import { SceneRecorderModal } from '../watch/SceneRecorderModal';
 import { CropRecorderModal } from '../watch/CropRecorderModal';
 import { StoryboardModal } from '../watch/StoryboardModal';
 import { AdMarkersOverlay } from '../watch/AdMarkersOverlay';
+import { ChannelIntelModal } from '../channel/ChannelIntelModal';
+import { ChannelOutliersModal } from '../channel/ChannelOutliersModal';
+import { ChannelThumbnailsModal } from '../channel/ChannelThumbnailsModal';
+import { channelStore } from '../../utils/channelStore';
 import { ToastContainer } from '../common/Toast';
 
 export const GlobalOverlay: React.FC = () => {
   const [state, setState] = useState(modalStore.getState());
+  const [channelState, setChannelState] = useState(channelStore.getState());
 
   useEffect(() => {
-    return modalStore.subscribe(() => {
+    const unsubModal = modalStore.subscribe(() => {
       setState(modalStore.getState());
     });
+    const unsubChannel = channelStore.subscribe(() => {
+      setChannelState(channelStore.getState());
+    });
+    return () => {
+      unsubModal();
+      unsubChannel();
+    };
   }, []);
 
   const { activeModal, videoDetails, toasts } = state;
+  const {
+    activeModal: activeChannelModal,
+    channelDetails,
+    videos: channelVideos,
+    outlierStats,
+  } = channelState;
 
   return (
     <>
@@ -135,7 +153,36 @@ export const GlobalOverlay: React.FC = () => {
         />
       )}
 
-      {/* 11. Global Toast Notifications */}
+      {/* 11. Channel Intel Modal */}
+      {channelDetails && (
+        <ChannelIntelModal
+          isOpen={activeChannelModal === 'channel-intel'}
+          onClose={() => channelStore.close()}
+          details={channelDetails}
+          onNotify={(msg, type) => modalStore.notify(msg, type)}
+        />
+      )}
+
+      {/* 12. Channel Outliers Modal */}
+      <ChannelOutliersModal
+        isOpen={activeChannelModal === 'channel-outliers'}
+        onClose={() => channelStore.close()}
+        channelTitle={channelDetails?.title || 'Channel'}
+        videos={channelVideos}
+        stats={outlierStats}
+        onNotify={(msg, type) => modalStore.notify(msg, type)}
+      />
+
+      {/* 13. Channel Thumbnails Modal */}
+      <ChannelThumbnailsModal
+        isOpen={activeChannelModal === 'channel-thumbnails'}
+        onClose={() => channelStore.close()}
+        channelTitle={channelDetails?.title || 'Channel'}
+        videos={channelVideos}
+        onNotify={(msg, type) => modalStore.notify(msg, type)}
+      />
+
+      {/* 14. Global Toast Notifications */}
       <ToastContainer
         toasts={toasts}
         onDismiss={(id) => modalStore.dismissToast(id)}

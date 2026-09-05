@@ -82,7 +82,8 @@ export type NiqBridgeMessageType =
   | 'NIQ_FETCH_COMMENTS_PROGRESS'
   | 'NIQ_FETCH_COMMENTS_STOP'
   | 'NIQ_FETCH_COMMENTS_COMPLETE'
-  | 'NIQ_FETCH_COMMENTS_ERROR';
+  | 'NIQ_FETCH_COMMENTS_ERROR'
+  | 'NIQ_CHANNEL_DATA';
 
 export interface NiqBridgeMessage<T = any> {
   source: 'NIQ_MAIN_WORLD' | 'NIQ_ISOLATED_WORLD';

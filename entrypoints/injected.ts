@@ -70,6 +70,46 @@ export default defineUnlistedScript(() => {
           header: pageData.header,
           metadata: pageData.metadata,
         });
+
+        // Channel page detection and extraction
+        const isChannelPage =
+          window.location.pathname.startsWith('/@') ||
+          window.location.pathname.startsWith('/channel/') ||
+          window.location.pathname.startsWith('/c/') ||
+          window.location.pathname.startsWith('/user/');
+
+        if (isChannelPage) {
+          const header =
+            pageData.header?.c4TabbedHeaderRenderer ||
+            pageData.header?.pageHeaderRenderer ||
+            {};
+          const channelMeta = pageData.metadata?.channelMetadataRenderer || {};
+
+          // Extract channel keywords
+          let keywords: string[] = [];
+          if (typeof channelMeta.keywords === 'string') {
+            const matches = channelMeta.keywords.match(/"([^"]+)"|(\S+)/g);
+            if (matches) {
+              keywords = matches.map((m: string) => m.replace(/^"|"$/g, '').trim()).filter(Boolean);
+            }
+          }
+
+          const channelPayload = {
+            channelId: channelMeta.externalId || channelMeta.channelUrl?.split('/').pop() || '',
+            title: channelMeta.title || header.title || document.title.replace(' - YouTube', '').trim(),
+            handle: header.channelHandleText?.runs?.[0]?.text || ('@' + window.location.pathname.split('/')[1]?.replace('@', '')),
+            subscriberCountText: header.subscriberCountText?.simpleText || '',
+            videoCountText: header.videosCountText?.runs?.[0]?.text || '',
+            description: channelMeta.description || '',
+            keywords,
+            avatarUrl: channelMeta.avatar?.thumbnails?.[0]?.url || header.avatar?.thumbnails?.[0]?.url || '',
+            bannerUrl: header.banner?.thumbnails?.[0]?.url || header.tvBanner?.thumbnails?.[0]?.url || '',
+            socialLinks: [],
+            isVerified: Boolean(header.badges?.some((b: any) => b.metadataBadgeRenderer?.style === 'BADGE_STYLE_TYPE_VERIFIED')),
+          };
+
+          postToIsolated('NIQ_CHANNEL_DATA', channelPayload);
+        }
       }
     } catch (err) {
       console.warn('[NiQ Injected] Extraction warning:', err);
