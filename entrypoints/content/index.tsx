@@ -4,6 +4,8 @@ import ReactDOM from 'react-dom/client';
 import { getNiqSettings, onNiqSettingsChange } from '../../src/utils/storage';
 import { NiqBridgeMessage, NiqSettings, WatchVideoDetails } from '../../src/types/niq';
 import { QuickActionBar } from '../../src/components/watch/QuickActionBar';
+import { GlobalOverlay } from '../../src/components/overlay/GlobalOverlay';
+import { modalStore } from '../../src/utils/modalStore';
 import styleText from './style.css?inline';
 
 export default defineContentScript({
@@ -12,12 +14,18 @@ export default defineContentScript({
   cssInjectionMode: 'manual',
 
   main() {
-    console.log('[NiQ Engine] Content script initialized.');
+    console.log('[NiQ Engine] Content script active.');
 
-    let reactRoot: ReactDOM.Root | null = null;
-    let hostElement: HTMLElement | null = null;
     let currentSettings: NiqSettings | null = null;
     let videoDetails: WatchVideoDetails | null = null;
+
+    // Overlay Root on document.body (Top stacking context for modals/toasts)
+    let overlayHost: HTMLElement | null = null;
+    let overlayReactRoot: ReactDOM.Root | null = null;
+
+    // Toolbar Root inside YouTube #top-row
+    let toolbarHost: HTMLElement | null = null;
+    let toolbarReactRoot: ReactDOM.Root | null = null;
     let mountObserver: MutationObserver | null = null;
 
     // 1. Inject Main-World bridge script
@@ -28,7 +36,7 @@ export default defineContentScript({
         script.onload = () => script.remove();
         (document.head || document.documentElement).appendChild(script);
       } catch (err) {
-        console.error('[NiQ Engine] Script injection error:', err);
+        console.error('[NiQ Engine] Bridge injection error:', err);
       }
     }
 
@@ -58,8 +66,38 @@ export default defineContentScript({
       }
     }
 
-    // 3. React Root Wrapper Component
-    const NiqWatchWrapper: React.FC = () => {
+    // 3. Mount Global Overlay on document.body (Guaranteed Top Stacking Context)
+    function initGlobalOverlay() {
+      if (overlayHost && document.body.contains(overlayHost)) {
+        return;
+      }
+
+      overlayHost = document.createElement('div');
+      overlayHost.id = 'niq-overlay-root';
+      overlayHost.style.position = 'fixed';
+      overlayHost.style.inset = '0';
+      overlayHost.style.zIndex = '2147483647';
+      overlayHost.style.pointerEvents = 'none';
+
+      const shadow = overlayHost.attachShadow({ mode: 'open' });
+
+      const styleElement = document.createElement('style');
+      styleElement.textContent = styleText;
+      shadow.appendChild(styleElement);
+
+      const mountPoint = document.createElement('div');
+      mountPoint.className = 'niq-overlay-container';
+      mountPoint.style.pointerEvents = 'auto';
+      shadow.appendChild(mountPoint);
+
+      document.body.appendChild(overlayHost);
+
+      overlayReactRoot = ReactDOM.createRoot(mountPoint);
+      overlayReactRoot.render(<GlobalOverlay />);
+    }
+
+    // 4. Toolbar Wrapper Component
+    const NiqToolbarWrapper: React.FC = () => {
       const [settings, setSettings] = useState<NiqSettings | null>(currentSettings);
       const [details, setDetails] = useState<WatchVideoDetails | null>(videoDetails);
       const [isWatch, setIsWatch] = useState(window.location.href.includes('/watch'));
@@ -76,6 +114,7 @@ export default defineContentScript({
           const msg: NiqBridgeMessage = event.data;
           if (msg.type === 'NIQ_PLAYER_RESPONSE') {
             setDetails(msg.payload);
+            modalStore.setVideoDetails(msg.payload);
           }
         };
 
@@ -111,21 +150,22 @@ export default defineContentScript({
       return <QuickActionBar details={details} />;
     };
 
-    // 4. Native In-Page Mount Management
-    function attachHostToDOM(): boolean {
+    // 5. Mount Toolbar into YouTube's #top-row near Title
+    function attachToolbarToDOM(): boolean {
       if (!window.location.href.includes('/watch')) {
         return false;
       }
 
-      // Create host element and Shadow DOM if not already created
-      if (!hostElement) {
-        hostElement = document.createElement('div');
-        hostElement.id = 'niq-root';
-        hostElement.style.display = 'inline-flex';
-        hostElement.style.alignItems = 'center';
-        hostElement.style.margin = '0 6px';
+      initGlobalOverlay();
 
-        const shadow = hostElement.attachShadow({ mode: 'open' });
+      if (!toolbarHost) {
+        toolbarHost = document.createElement('div');
+        toolbarHost.id = 'niq-toolbar-root';
+        toolbarHost.style.display = 'inline-flex';
+        toolbarHost.style.alignItems = 'center';
+        toolbarHost.style.margin = '0 6px';
+
+        const shadow = toolbarHost.attachShadow({ mode: 'open' });
 
         const styleElement = document.createElement('style');
         styleElement.textContent = styleText;
@@ -135,38 +175,28 @@ export default defineContentScript({
         mountPoint.className = 'niq-container';
         shadow.appendChild(mountPoint);
 
-        reactRoot = ReactDOM.createRoot(mountPoint);
-        reactRoot.render(<NiqWatchWrapper />);
+        toolbarReactRoot = ReactDOM.createRoot(mountPoint);
+        toolbarReactRoot.render(<NiqToolbarWrapper />);
       }
 
-      // Priority 1: In #top-row between #owner and #actions
       const owner = document.querySelector('ytd-watch-metadata #top-row #owner');
       const actions = document.querySelector('ytd-watch-metadata #top-row #actions');
       const topRow = document.querySelector('ytd-watch-metadata #top-row');
 
       if (owner && owner.parentNode) {
-        if (hostElement.parentNode !== owner.parentNode || hostElement.nextSibling !== (actions || owner.nextSibling)) {
+        if (toolbarHost.parentNode !== owner.parentNode || toolbarHost.nextSibling !== (actions || owner.nextSibling)) {
           if (actions) {
-            owner.parentNode.insertBefore(hostElement, actions);
+            owner.parentNode.insertBefore(toolbarHost, actions);
           } else {
-            owner.parentNode.insertBefore(hostElement, owner.nextSibling);
+            owner.parentNode.insertBefore(toolbarHost, owner.nextSibling);
           }
         }
         return true;
       }
 
       if (topRow) {
-        if (hostElement.parentNode !== topRow) {
-          topRow.appendChild(hostElement);
-        }
-        return true;
-      }
-
-      // Priority 2: In #above-the-fold after #title
-      const title = document.querySelector('ytd-watch-metadata #above-the-fold #title') || document.querySelector('#title.ytd-watch-metadata');
-      if (title && title.parentNode) {
-        if (hostElement.parentNode !== title.parentNode) {
-          title.parentNode.insertBefore(hostElement, title.nextSibling);
+        if (toolbarHost.parentNode !== topRow) {
+          topRow.appendChild(toolbarHost);
         }
         return true;
       }
@@ -174,21 +204,19 @@ export default defineContentScript({
       return false;
     }
 
-    // 5. Watch for dynamic DOM changes on YouTube
-    function startMountObserver() {
+    // 6. Observe DOM for YouTube navigation lifecycle
+    function startObservers() {
       if (mountObserver) {
         mountObserver.disconnect();
       }
 
-      // Try immediate attachment
-      attachHostToDOM();
+      attachToolbarToDOM();
 
-      // Observe DOM for YouTube's dynamic page navigation and re-renders
       mountObserver = new MutationObserver(() => {
         if (window.location.href.includes('/watch')) {
           const owner = document.querySelector('ytd-watch-metadata #top-row #owner');
-          if (owner && (!hostElement || hostElement.parentNode !== owner.parentNode)) {
-            attachHostToDOM();
+          if (owner && (!toolbarHost || toolbarHost.parentNode !== owner.parentNode)) {
+            attachToolbarToDOM();
           }
         }
       });
@@ -199,7 +227,7 @@ export default defineContentScript({
       });
     }
 
-    // 6. Initialization
+    // 7. Initialize
     function setup() {
       getNiqSettings().then((settings) => {
         currentSettings = settings;
@@ -212,12 +240,12 @@ export default defineContentScript({
         updateShortsVisibility(newSettings.hideShorts);
       });
 
-      startMountObserver();
+      startObservers();
 
       window.addEventListener('yt-navigate-finish', () => {
-        setTimeout(attachHostToDOM, 200);
-        setTimeout(attachHostToDOM, 600);
-        setTimeout(attachHostToDOM, 1200);
+        setTimeout(attachToolbarToDOM, 250);
+        setTimeout(attachToolbarToDOM, 750);
+        setTimeout(attachToolbarToDOM, 1400);
       });
     }
 
